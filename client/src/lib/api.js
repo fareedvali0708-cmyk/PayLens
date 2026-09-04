@@ -72,6 +72,28 @@ export async function checkHealth() {
 }
 
 /**
+ * GET /api/settings
+ * Fetches settings for the authenticated merchant.
+ * @param {string} token - Supabase JWT
+ */
+export async function getSettings(token) {
+  return request('/settings', token)
+}
+
+/**
+ * PUT /api/settings
+ * Updates merchant profile and Razorpay credentials.
+ * @param {string} token - Supabase JWT
+ * @param {object} settingsData - Settings payload
+ */
+export async function updateSettings(token, settingsData) {
+  return request('/settings', token, {
+    method: 'PUT',
+    body: JSON.stringify(settingsData),
+  })
+}
+
+/**
  * POST /api/checkout/create-order
  * Generates a Razorpay Test Mode checkout order (unauthenticated customer demo).
  * @param {number} amount - Amount in INR (default 1499)

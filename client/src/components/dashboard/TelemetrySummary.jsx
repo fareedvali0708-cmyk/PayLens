@@ -1,53 +1,52 @@
 export default function TelemetrySummary({ totalEvents = 63, activeLinksCount = 4 }) {
   return (
     <section
-      className="bg-white rounded-xl border border-[#E2E1DA] shadow-xs w-full box-border grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-6 items-center min-h-[88px]"
       style={{
-        minHeight: '88px',
-        padding: '18px 20px',
+        backgroundColor: '#ffffff',
+        border: '1px solid #E5E7EB',
+        borderRadius: '16px',
+        padding: '24px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
+        width: '100%',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '24px',
+        alignItems: 'center',
       }}
       aria-label="Telemetry Pipeline Status"
     >
       {/* Left: Pipeline Status Description */}
-      <div className="space-y-1 min-w-0">
-        <div className="inline-flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-          <span className="text-[11px] font-bold text-[#093824] uppercase tracking-wider font-['Space_Grotesk',sans-serif]">
-            Telemetry Pipeline Status
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#059669' }} />
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: '700', color: '#0B4F3C', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            TELEMETRY PIPELINE STATUS
           </span>
         </div>
-        <p className="text-sm font-semibold text-[#0F172A] leading-snug">
+        <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', margin: '4px 0 6px 0', lineHeight: '1.4' }}>
           {totalEvents} checkout failure events captured across active merchant sessions
-        </p>
-        <p className="text-xs text-[#64748B]">
+        </h3>
+        <p style={{ fontSize: '12px', color: '#6B7280', margin: 0, lineHeight: '1.5' }}>
           Awaiting customer checkout completion on generated recovery links.
         </p>
       </div>
 
-      {/* Right: Two Compact Stat Blocks (Minimum width: 110px each) */}
-      <div className="flex items-center gap-3 shrink-0">
-        {/* Active Links */}
-        <div
-          className="bg-[#F8FAF8] border border-[#E2EBE4] rounded-lg px-4 py-2 text-left min-w-[110px]"
-          style={{ minWidth: '110px' }}
-        >
-          <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block">
-            Active Links
+      {/* Right: Two Premium Stat Cards */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '14px 20px', minWidth: '130px', textTransform: 'none' }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '4px' }}>
+            ACTIVE LINKS
           </span>
-          <span className="text-lg font-bold text-[#093824] font-['Space_Grotesk',sans-serif] leading-tight mt-0.5 block">
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '20px', fontWeight: '800', color: '#0B4F3C', display: 'block' }}>
             {activeLinksCount}
           </span>
         </div>
 
-        {/* Target Retention */}
-        <div
-          className="bg-[#F8FAF8] border border-[#E2EBE4] rounded-lg px-4 py-2 text-left min-w-[120px]"
-          style={{ minWidth: '120px' }}
-        >
-          <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block">
-            Target Retention
+        <div style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '14px 20px', minWidth: '140px', textTransform: 'none' }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '4px' }}>
+            TARGET RETENTION
           </span>
-          <span className="text-lg font-bold text-[#0F172A] font-['Space_Grotesk',sans-serif] leading-tight mt-0.5 block">
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '20px', fontWeight: '800', color: '#111827', display: 'block' }}>
             &gt; 30%
           </span>
         </div>

@@ -1,27 +1,22 @@
 const STATUS_STYLES = {
   PENDING: {
-    bg: 'bg-warning-light',
-    text: 'text-accent',
+    classes: 'bg-warning-light text-accent border-accent/30',
     label: 'Pending',
   },
   RECOVERY_SENT: {
-    bg: 'bg-info-light',
-    text: 'text-info',
+    classes: 'bg-info-light text-info border-info/30',
     label: 'Recovery Sent',
   },
   RECOVERED: {
-    bg: 'bg-success-light',
-    text: 'text-success',
+    classes: 'bg-success-light text-success border-success/30',
     label: 'Recovered',
   },
   FAILED: {
-    bg: 'bg-danger-light',
-    text: 'text-danger',
+    classes: 'bg-danger-light text-danger border-danger/30',
     label: 'Failed',
   },
   IGNORED: {
-    bg: 'bg-surface-hover',
-    text: 'text-text-muted',
+    classes: 'bg-surface-hover text-text-muted border-border',
     label: 'Ignored',
   },
 }
@@ -30,7 +25,7 @@ export default function StatusBadge({ status }) {
   const s = STATUS_STYLES[status] || STATUS_STYLES.PENDING
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${s.bg} ${s.text}`}
+      className={`inline-flex items-center h-6 px-2.5 rounded-full text-xs font-semibold border whitespace-nowrap ${s.classes}`}
     >
       {s.label}
     </span>

@@ -25,233 +25,337 @@ export default function TransactionDiagnosticsDrawer({
   if (!tx) return null
 
   const isRecovered = tx.status === 'RECOVERED'
+  const displayId = tx.razorpay_order_id || tx.id
 
   const drawerContent = (
-    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
-      {/* 1. Backdrop overlay */}
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999,
+        display: 'flex',
+        justifyContent: 'flex-end',
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* 1. Backdrop Overlay */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-200"
         onClick={onClose}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(17, 24, 39, 0.5)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+          transition: 'opacity 200ms ease',
+        }}
         aria-hidden="true"
       />
 
       {/* 2. Slide-over Drawer Panel */}
       <aside
-        className="fixed top-0 right-0 bottom-0 h-screen w-full sm:w-[460px] md:w-[480px] bg-white shadow-2xl flex flex-col border-l border-[#E2E1DA] z-50 overflow-hidden"
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: '520px',
+          height: '100vh',
+          backgroundColor: '#ffffff',
+          boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.18)',
+          display: 'flex',
+          flexDirection: 'column',
+          borderLeft: '1px solid #E5E7EB',
+          zIndex: 100000,
+          overflow: 'hidden',
+        }}
         aria-label="Transaction Diagnostics Drawer"
       >
-        {/* 1. Header: Always pinned to the top (shrink-0) */}
-        <div className="px-6 py-4.5 border-b border-[#F1F5F9] flex items-center justify-between gap-3 shrink-0 bg-white">
-          <div className="min-w-0">
-            <h2 className="text-lg font-bold text-[#0F172A] font-['Space_Grotesk',sans-serif] tracking-tight">
-              Transaction Diagnostics
+        {/* Header */}
+        <div
+          style={{
+            padding: '20px 24px',
+            borderBottom: '1px solid #E5E7EB',
+            backgroundColor: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <span
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '11px',
+                fontWeight: '700',
+                color: '#6B7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                display: 'block',
+                marginBottom: '4px',
+              }}
+            >
+              TRANSACTION DIAGNOSTICS // V4.2
+            </span>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#111827', margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>
+              Failure Telemetry
             </h2>
-            <p className="text-xs text-[#64748B] mt-0.5 truncate">
-              ID: <span className="font-mono text-[#334155]">{tx.razorpay_order_id || tx.id}</span>
-            </p>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '11px', color: '#6B7280', fontWeight: '500' }}>Order ID:</span>
+              <span
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  color: '#0B4F3C',
+                  backgroundColor: '#ECFDF5',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #A7F3D0',
+                }}
+              >
+                {displayId}
+              </span>
+            </div>
           </div>
 
-          {/* Accessible Close Button */}
           <button
             id="drawer-close-btn"
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors cursor-pointer shrink-0"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: '#F3F4F6',
+              border: '1px solid #E5E7EB',
+              color: '#4B5563',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
             aria-label="Close diagnostics drawer"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        {/* 2. Scrollable Body: only this middle area scrolls */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-          {/* Transaction Summary Grid */}
-          <div className="grid grid-cols-2 gap-3 text-xs">
+        {/* Scrollable Body */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Summary Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
             {/* Order ID */}
-            <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#E2E1DA]">
-              <span className="text-[10px] uppercase font-bold text-[#64748B] tracking-wider block">
+            <div style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '14px', padding: '14px 16px' }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
                 ORDER ID
               </span>
-              <span
-                className="font-mono text-xs font-semibold text-[#0F172A] block truncate mt-1"
-                title={tx.razorpay_order_id || '—'}
-              >
-                {tx.razorpay_order_id || '—'}
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', fontWeight: '700', color: '#111827', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={displayId}>
+                {displayId}
               </span>
             </div>
 
             {/* Amount */}
-            <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#E2E1DA]">
-              <span className="text-[10px] uppercase font-bold text-[#64748B] tracking-wider block">
+            <div style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '14px', padding: '14px 16px' }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
                 AMOUNT
               </span>
-              <span className="text-sm font-bold text-[#0F172A] block mt-1 font-['Space_Grotesk',sans-serif]">
-                {formatINR(tx.amount)}{' '}
-                <span className="text-[11px] font-semibold text-[#64748B]">{tx.currency || 'INR'}</span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '14px', fontWeight: '800', color: '#0B4F3C', display: 'block' }}>
+                {formatINR(tx.amount)} <span style={{ fontSize: '11px', color: '#6B7280', fontWeight: '600' }}>{tx.currency || 'INR'}</span>
               </span>
             </div>
 
             {/* Customer */}
-            <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#E2E1DA]">
-              <span className="text-[10px] uppercase font-bold text-[#64748B] tracking-wider block">
+            <div style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '14px', padding: '14px 16px' }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
                 CUSTOMER
               </span>
-              <span
-                className="text-xs font-semibold text-[#0F172A] block truncate mt-1"
-                title={tx.customer_email || '—'}
-              >
-                {tx.customer_email || '—'}
+              <span style={{ fontSize: '12px', fontWeight: '600', color: '#111827', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tx.customer_email || 'Direct Customer'}>
+                {tx.customer_email || 'Direct Customer'}
               </span>
               {tx.customer_phone && (
-                <span className="text-[11px] text-[#64748B] font-mono mt-0.5 block">
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: '#6B7280', display: 'block', marginTop: '2px' }}>
                   {tx.customer_phone}
                 </span>
               )}
             </div>
 
             {/* Timestamp */}
-            <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#E2E1DA]">
-              <span className="text-[10px] uppercase font-bold text-[#64748B] tracking-wider block">
-                TIMESTAMP
+            <div style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '14px', padding: '14px 16px' }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
+                DETECTED AT
               </span>
-              <span className="text-xs font-medium text-[#334155] block mt-1">
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', fontWeight: '600', color: '#374151', display: 'block' }}>
                 {formatDate(tx.created_at)}
               </span>
             </div>
           </div>
 
-          {/* Failure Section: Subtle light-red background */}
-          <div className="bg-red-50/70 border border-red-200/80 rounded-xl p-4 space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="px-2 py-0.5 rounded bg-red-100/90 text-red-800 text-[10px] font-bold font-mono uppercase tracking-wider">
+          {/* Failure Banner */}
+          <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '16px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: '6px', backgroundColor: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 PAYMENT FAILED
               </span>
-              <span className="text-[11px] font-mono text-red-700">
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: '#B91C1C', fontWeight: '700' }}>
                 {tx.error_code || 'GATEWAY_ERROR'}
               </span>
             </div>
 
-            <div className="text-sm font-bold text-red-900">
-              {tx.failure_reason || 'BANK_DOWNTIME'}
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: '700', color: '#991B1B', marginBottom: '4px' }}>
+                {tx.failure_reason || 'BANK_DOWNTIME'}
+              </div>
+              <p style={{ fontSize: '12px', color: '#B91C1C', lineHeight: '1.6', margin: 0 }}>
+                {tx.error_description || 'Issuing bank server is currently unavailable or experiencing high latency.'}
+              </p>
             </div>
-
-            <p className="text-xs text-red-800 leading-relaxed">
-              {tx.error_description ||
-                'Issuing bank server is currently unavailable or experiencing high latency.'}
-            </p>
           </div>
 
-          {/* AI Insight Section: Subtle light-neutral/green surface */}
+          {/* AI Insight Section */}
           {tx.ai_insight && (
-            <div className="bg-[#F0F6F2] border border-[#D5E5DA] rounded-xl p-4 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[#093824] uppercase tracking-wider font-['Space_Grotesk',sans-serif]">
-                <svg className="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-                </svg>
-                <span>AI INSIGHT</span>
+            <div style={{ backgroundColor: '#E6F4F1', border: '1px solid rgba(11, 79, 60, 0.25)', borderRadius: '16px', padding: '18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0B4F3C' }} />
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: '700', color: '#0B4F3C', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  AI TELEMETRY INSIGHT
+                </span>
               </div>
-              <p className="text-xs sm:text-[13px] text-[#0A3D27] leading-relaxed">
+              <p style={{ fontSize: '12.5px', color: '#111827', lineHeight: '1.6', margin: 0, fontWeight: '500' }}>
                 {tx.ai_insight}
               </p>
             </div>
           )}
 
           {/* Recovery Link Section */}
-          <div className="space-y-2">
-            <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider block">
-              Recovery Status
+          <div>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '8px' }}>
+              RECOVERY STATUS & LINK
             </span>
 
             {tx.recovery_link_url ? (
-              <div className="bg-[#FAF8F5] border border-[#E2E1DA] rounded-xl p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-[#093824] block">
-                    Active Payment Recovery Link
+              <div style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '16px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#0B4F3C' }}>
+                    Active Single-Click Recovery Link
                   </span>
                   <a
-                    id="drawer-open-link-btn"
                     href={tx.recovery_link_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[11px] font-semibold text-[#093824] hover:underline inline-flex items-center gap-1"
+                    style={{ fontSize: '12px', fontWeight: '700', color: '#0B4F3C', textDecoration: 'underline' }}
                   >
-                    <span>Open Link</span>
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
+                    Open Link &rarr;
                   </a>
                 </div>
-                <div className="flex items-center gap-2">
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="text"
                     readOnly
                     value={tx.recovery_link_url}
-                    className="w-full px-3 py-1.5 bg-white border border-[#CBD5E1] rounded-lg text-xs font-mono text-[#0F172A] select-all focus:outline-none"
+                    style={{ flex: '1 1 200px', height: '38px', padding: '0 12px', backgroundColor: '#ffffff', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", color: '#111827', outline: 'none' }}
                   />
                   <a
-                    id="drawer-open-btn"
                     href={tx.recovery_link_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-3 py-1.5 bg-[#093824] hover:bg-[#072B1C] text-white rounded-lg text-xs font-semibold transition shrink-0 cursor-pointer shadow-2xs inline-flex items-center justify-center"
-                    aria-label="Open payment recovery link in a new tab"
+                    style={{ height: '38px', padding: '0 16px', backgroundColor: '#0B4F3C', color: '#ffffff', borderRadius: '8px', fontSize: '12px', fontWeight: '600', border: 'none', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     Open
                   </a>
                   <button
-                    id="drawer-copy-btn"
                     type="button"
                     onClick={() => onCopyLink(tx.recovery_link_url)}
-                    className="px-3 py-1.5 bg-white border border-[#CBD5E1] rounded-lg text-xs font-semibold text-[#093824] hover:bg-[#F8FAFC] transition shrink-0 cursor-pointer shadow-2xs"
+                    style={{ height: '38px', padding: '0 16px', backgroundColor: '#ffffff', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '12px', fontWeight: '600', color: '#374151', cursor: 'pointer' }}
                   >
                     {copiedModalLink ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="bg-[#FAF8F5] border border-[#E2E1DA] rounded-xl py-3 px-4 text-center">
-                <p className="text-xs text-[#64748B]">
-                  No recovery link has been generated yet.
+              <div style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '14px', padding: '16px', textAlign: 'center' }}>
+                <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
+                  No recovery link has been generated for this transaction yet.
                 </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* 3. Footer Actions: Always pinned to the bottom (shrink-0) */}
-        <div className="px-6 py-4 border-t border-[#F1F5F9] bg-[#FAF8F5]/80 flex items-center justify-between gap-3 shrink-0">
-          {/* Secondary Action: Close */}
+        {/* Footer */}
+        <div
+          style={{
+            padding: '16px 24px',
+            borderTop: '1px solid #E5E7EB',
+            backgroundColor: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexShrink: 0,
+          }}
+        >
           <button
-            id="drawer-close-btn"
+            id="drawer-close-btn-footer"
             type="button"
             onClick={onClose}
-            className="h-11 px-5 rounded-xl border border-[#CBD5E1] bg-white text-xs font-semibold text-[#0F172A] hover:bg-[#F8FAFC] hover:border-[#94A3B8] transition duration-150 cursor-pointer shadow-2xs"
+            style={{
+              height: '42px',
+              padding: '0 22px',
+              borderRadius: '9999px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #D1D5DB',
+              color: '#374151',
+              fontSize: '12px',
+              fontWeight: '600',
+              cursor: 'pointer',
+            }}
           >
             Close
           </button>
 
-          {/* Primary Action: Recover Payment */}
           {!isRecovered ? (
             <button
               id="drawer-recover-btn"
               type="button"
               onClick={() => onRetry(tx)}
               disabled={isRetrying}
-              className="h-11 px-6 rounded-xl bg-[#093824] hover:bg-[#072B1C] text-white text-xs font-semibold transition duration-150 hover:shadow-xs active:scale-[0.98] cursor-pointer shadow-xs inline-flex items-center justify-center gap-2 flex-1 sm:flex-none sm:min-w-[170px] disabled:opacity-50"
+              style={{
+                height: '42px',
+                padding: '0 26px',
+                borderRadius: '9999px',
+                backgroundColor: '#0B4F3C',
+                color: '#ffffff',
+                fontSize: '13px',
+                fontWeight: '600',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(11, 79, 60, 0.25)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
             >
               {isRetrying && (
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span style={{ width: '14px', height: '14px', border: '2px solid #ffffff', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
               )}
               <span>Recover Payment</span>
             </button>
           ) : (
-            <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Payment Recovered</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '0 16px', height: '40px', borderRadius: '9999px', backgroundColor: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', fontSize: '12px', fontWeight: '700' }}>
+              ✓ Payment Recovered
             </div>
           )}
         </div>

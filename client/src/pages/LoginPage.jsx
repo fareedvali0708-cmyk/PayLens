@@ -3,19 +3,16 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { validateLogin, validateSignUp } from '../lib/validation'
 import { supabase } from '../lib/supabase'
-import resilienceGraphic from '../assets/payment-resilience-graphic.png'
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [businessName, setBusinessName] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
 
-  // Form field validation state
   const [fieldErrors, setFieldErrors] = useState({})
-  const [touched, setTouched] = useState({})
-
-  // General server/auth error or message
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -23,17 +20,6 @@ export default function LoginPage() {
 
   const { signIn, signUp } = useAuth()
   const navigate = useNavigate()
-
-  function handleBlur(field) {
-    setTouched((prev) => ({ ...prev, [field]: true }))
-    if (isSignUp) {
-      const { errors } = validateSignUp({ businessName, email, password })
-      setFieldErrors((prev) => ({ ...prev, [field]: errors[field] }))
-    } else {
-      const { errors } = validateLogin({ email, password })
-      setFieldErrors((prev) => ({ ...prev, [field]: errors[field] }))
-    }
-  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -46,7 +32,6 @@ export default function LoginPage() {
 
     if (!validationResult.isValid) {
       setFieldErrors(validationResult.errors)
-      setTouched(isSignUp ? { businessName: true, email: true, password: true } : { email: true, password: true })
       return
     }
 
@@ -59,11 +44,11 @@ export default function LoginPage() {
         if (res?.user && !res?.session) {
           setMessage('Account created! Please check your email to confirm registration.')
         } else {
-          navigate('/dashboard')
+          navigate('/app/overview')
         }
       } else {
         await signIn(email, password)
-        navigate('/dashboard')
+        navigate('/app/overview')
       }
     } catch (err) {
       setError(err.message || 'Authentication failed. Please check your credentials.')
@@ -79,7 +64,7 @@ export default function LoginPage() {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/app/overview`,
         },
       })
       if (oauthError) throw oauthError
@@ -94,288 +79,268 @@ export default function LoginPage() {
     setError(null)
     setMessage(null)
     setFieldErrors({})
-    setTouched({})
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row font-['Inter',sans-serif] text-[#111827]">
-      {/* Left Column: Form Area (Warm Cream Canvas) */}
-      <div
-        className="w-full lg:w-1/2 min-h-screen flex flex-col justify-center items-center px-8 sm:px-14 lg:px-20 py-12 relative"
-        style={{ backgroundColor: '#F5F6EE' }}
-      >
-        <div className="w-full max-w-[430px] flex flex-col justify-center animate-fade-in">
-          {/* PayLens Logo */}
-          <div className="flex items-center gap-2.5 mb-10">
-            <svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M6 6H20C23.3137 6 26 8.68629 26 12C26 15.3137 23.3137 18 20 18H12V26H6V6Z"
-                fill="#1E3A8A"
-              />
-              <path
-                d="M12 12H19C20.1046 12 21 12.8954 21 14C21 15.1046 20.1046 16 19 16H12V12Z"
-                fill="#3B82F6"
-              />
-            </svg>
-            <span className="font-['Space_Grotesk',sans-serif] text-2xl font-bold text-[#0F172A] tracking-tight">
-              PayLens
-            </span>
+    <div style={{ minHeight: '100vh', width: '100%', display: 'flex', flexWrap: 'wrap', backgroundColor: '#F4F4F0', color: '#111827', fontFamily: "'Inter', sans-serif" }}>
+      {/* ── Left Hero Canvas (Centered Content Container) ── */}
+      <div style={{ flex: '1 1 50%', minWidth: '340px', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '48px 40px sm:48px 64px', backgroundColor: '#F4F4F0', borderRight: '1px solid #E5E7EB' }}>
+        {/* Top Brand Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', maxWidth: '520px', margin: '0 auto' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#0B4F3C', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '13px' }}>
+            PL
           </div>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', fontWeight: '700', letterSpacing: '0.14em', color: '#0B4F3C', textTransform: 'uppercase' }}>
+            PAYLENS RECOVERY CONSOLE
+          </span>
+        </div>
 
-          {/* Main Heading */}
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#0F172A] tracking-tight leading-[1.18] mb-3 font-['Space_Grotesk',sans-serif]">
-            {isSignUp ? (
-              <>
-                Register Your Merchant
-                <br />
-                Account
-              </>
-            ) : (
-              <>
-                Recover Failed Checkouts
-                <br />
-                Automatically
-              </>
-            )}
+        {/* Hero Editorial Block (Centered in Left Half) */}
+        <div style={{ width: '100%', maxWidth: '520px', margin: 'auto auto', padding: '36px 0' }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: '600', letterSpacing: '0.08em', color: '#4B5563', textTransform: 'uppercase', display: 'block', marginBottom: '14px' }}>
+            {isSignUp ? 'OPERATIONAL ONBOARDING // V4.2' : 'OPERATIONAL ACCESS // V4.2'}
+          </span>
+
+          <h1 style={{ fontFamily: "'Newsreader', serif", fontSize: '48px', fontWeight: '400', color: '#111827', letterSpacing: '-0.02em', lineHeight: '1.08', textTransform: 'uppercase', marginBottom: '20px' }}>
+            {isSignUp ? 'CREATE MERCHANT WORKSPACE.' : 'RETURN TO OPERATIONS.'}
           </h1>
 
-          {/* Subtext */}
-          <p className="text-sm text-[#4B5563] leading-relaxed mb-8">
+          <p style={{ fontSize: '14px', color: '#4B5563', lineHeight: '1.6', marginBottom: '32px', maxWidth: '480px' }}>
             {isSignUp
-              ? 'Set up your merchant workspace to start capturing lost revenue and automated recovery.'
-              : 'Log in to your merchant console to inspect real-time failure diagnostics and trigger high-converting recovery links.'}
+              ? 'Set up your merchant workspace to start capturing lost payment checkout revenue in real time.'
+              : 'Review failed payments, understand what needs attention, and continue recovery from where you left off.'}
           </p>
 
-          {/* Error & Message Banners */}
-          {error && (
-            <div
-              role="alert"
-              className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2.5 animate-fade-in"
-            >
-              <svg className="w-4 h-4 shrink-0 mt-0.5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
+          {/* Stitch Recovery Efficiency Chart Card (Full width of centered container) */}
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #E5E7EB', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                RECOVERY EFFICIENCY
+              </span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: '700', color: '#065F46', backgroundColor: '#D1FAE5', border: '1px solid #A7F3D0', padding: '3px 10px', borderRadius: '9999px' }}>
+                +14.2% THIS WEEK
+              </span>
+            </div>
+
+            {/* 10 Progressing Green Bars */}
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '56px', marginBottom: '16px' }}>
+              {[18, 26, 32, 40, 48, 56, 68, 80, 90, 100].map((h, i) => (
+                <div
+                  key={i}
+                  style={{
+                    flex: 1,
+                    height: `${h}%`,
+                    borderRadius: '3px',
+                    backgroundColor: i >= 7 ? '#0B4F3C' : i >= 4 ? '#059669' : i >= 2 ? '#34D399' : '#A7F3D0',
+                  }}
                 />
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", color: '#6B7280', paddingTop: '12px', borderTop: '1px solid #F3F4F6' }}>
+              <span>Active Ledgers: 1,482</span>
+              <span>Synced 2m ago</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", color: '#9CA3AF', lineHeight: '1.5', width: '100%', maxWidth: '520px', margin: '0 auto' }}>
+          &copy; PayLens Financial Intelligence Inc. All rights reserved. Secured via end-to-end ledger encryption.
+        </div>
+      </div>
+
+      {/* ── Right Form Canvas (Clean Floating Card Container) ── */}
+      <div style={{ flex: '1 1 50%', minWidth: '340px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', backgroundColor: '#F8F9FA' }}>
+        {/* Floating Authentication Card */}
+        <div style={{ width: '100%', maxWidth: '440px', backgroundColor: '#ffffff', borderRadius: '24px', border: '1px solid #E5E7EB', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.06)', padding: '40px' }}>
+          <div style={{ marginBottom: '24px' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '6px', letterSpacing: '-0.02em' }}>
+              {isSignUp ? 'Create Merchant Workspace' : 'Sign In'}
+            </h2>
+            <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: '1.5' }}>
+              {isSignUp
+                ? 'Enter your merchant details to register your recovery workspace.'
+                : 'Enter your credentials to access the recovery dashboard.'}
+            </p>
+          </div>
+
+          {/* Feedback Banners */}
+          {error && (
+            <div style={{ marginBottom: '20px', padding: '14px', borderRadius: '12px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', fontSize: '12px', fontWeight: '500', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ shrink: 0, marginTop: '2px' }}>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
-              <span className="leading-snug">{error}</span>
+              <span>{error}</span>
             </div>
           )}
 
           {message && (
-            <div
-              role="status"
-              className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2.5 animate-fade-in"
-            >
-              <svg className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="leading-snug">{message}</span>
+            <div style={{ marginBottom: '20px', padding: '14px', borderRadius: '12px', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', color: '#065F46', fontSize: '12px', fontWeight: '500' }}>
+              {message}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} noValidate className="space-y-4">
-            {/* Store / Business Name (Sign Up only) */}
+          <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {isSignUp && (
               <div>
-                <label
-                  htmlFor="businessName"
-                  className="block text-xs font-semibold text-[#1F2937] mb-1.5"
-                >
-                  Business / Store Name
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
+                  Business / Store Name *
                 </label>
                 <input
-                  id="businessName"
                   type="text"
-                  placeholder="Acme Payments"
+                  placeholder="Acme Store Pvt Ltd"
                   value={businessName}
-                  onChange={(e) => {
-                    setBusinessName(e.target.value)
-                    if (fieldErrors.businessName) {
-                      setFieldErrors((prev) => ({ ...prev, businessName: undefined }))
-                    }
-                  }}
-                  onBlur={() => handleBlur('businessName')}
-                  className={`w-full h-11 px-3.5 rounded-lg bg-white border text-sm text-[#0F172A] placeholder-[#9CA3AF] transition focus:outline-none focus:ring-1 ${fieldErrors.businessName
-                      ? 'border-red-500 focus:ring-red-500'
-                      : 'border-[#CBD5E1] focus:ring-[#135238] focus:border-[#135238]'
-                    }`}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  style={{ width: '100%', height: '44px', padding: '0 14px', borderRadius: '12px', border: '1px solid #D1D5DB', backgroundColor: '#F9FAFB', fontSize: '13px', color: '#111827', outline: 'none' }}
                 />
                 {fieldErrors.businessName && (
-                  <p className="text-xs text-red-600 mt-1 font-medium">{fieldErrors.businessName}</p>
+                  <p style={{ fontSize: '12px', color: '#DC2626', marginTop: '4px', fontWeight: '500' }}>{fieldErrors.businessName}</p>
                 )}
               </div>
             )}
 
-            {/* Work Email Address */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-xs font-semibold text-[#1F2937] mb-1.5"
-              >
-                Work Email Address
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
+                Work Email *
               </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="test@paylens.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value)
-                  if (fieldErrors.email) {
-                    setFieldErrors((prev) => ({ ...prev, email: undefined }))
-                  }
-                }}
-                onBlur={() => handleBlur('email')}
-                className={`w-full h-11 px-3.5 rounded-lg bg-white border text-sm text-[#0F172A] placeholder-[#9CA3AF] transition focus:outline-none focus:ring-1 ${fieldErrors.email
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-[#CBD5E1] focus:ring-[#135238] focus:border-[#135238]'
-                  }`}
-              />
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: '14px', top: '13px', color: '#9CA3AF', pointerEvents: 'none' }}>
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </span>
+                <input
+                  type="email"
+                  placeholder="name@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{ width: '100%', height: '44px', paddingLeft: '44px', paddingRight: '14px', borderRadius: '12px', border: '1px solid #D1D5DB', backgroundColor: '#F9FAFB', fontSize: '13px', color: '#111827', outline: 'none' }}
+                />
+              </div>
               {fieldErrors.email && (
-                <p className="text-xs text-red-600 mt-1 font-medium">{fieldErrors.email}</p>
+                <p style={{ fontSize: '12px', color: '#DC2626', marginTop: '4px', fontWeight: '500' }}>{fieldErrors.email}</p>
               )}
             </div>
 
-            {/* Password */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-xs font-semibold text-[#1F2937] mb-1.5"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value)
-                  if (fieldErrors.password) {
-                    setFieldErrors((prev) => ({ ...prev, password: undefined }))
-                  }
-                }}
-                onBlur={() => handleBlur('password')}
-                className={`w-full h-11 px-3.5 rounded-lg bg-white border text-sm text-[#0F172A] placeholder-[#94A3B8] transition focus:outline-none focus:ring-1 ${fieldErrors.password
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-[#CBD5E1] focus:ring-[#135238] focus:border-[#135238]'
-                  }`}
-              />
-              <span className="block text-xs text-[#6B7280] mt-1.5">Min. 6 characters</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#374151' }}>
+                  Password *
+                </label>
+                {!isSignUp && (
+                  <a href="#forgot" onClick={(e) => e.preventDefault()} style={{ fontSize: '12px', color: '#4B5563', textDecoration: 'none', fontWeight: '500' }}>
+                    Forgot password?
+                  </a>
+                )}
+              </div>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: '14px', top: '13px', color: '#9CA3AF', pointerEvents: 'none' }}>
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                  </svg>
+                </span>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{ width: '100%', height: '44px', paddingLeft: '44px', paddingRight: '44px', borderRadius: '12px', border: '1px solid #D1D5DB', backgroundColor: '#F9FAFB', fontSize: '13px', color: '#111827', outline: 'none' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ position: 'absolute', right: '14px', top: '12px', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  aria-label="Toggle password visibility"
+                >
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    {showPassword ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.015 10.015 0 012.227-.263c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m-4.692-4.692a3 3 0 11-4.243-4.243" />
+                    ) : (
+                      <>
+                        <circle cx="12" cy="12" r="3" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </>
+                    )}
+                  </svg>
+                </button>
+              </div>
               {fieldErrors.password && (
-                <p className="text-xs text-red-600 mt-1 font-medium">{fieldErrors.password}</p>
+                <p style={{ fontSize: '12px', color: '#DC2626', marginTop: '4px', fontWeight: '500' }}>{fieldErrors.password}</p>
               )}
             </div>
 
-            {/* Action Buttons Section with strict 16-20px top margin and 10-14px internal spacing */}
-            <div className="pt-4 flex flex-col gap-3">
-              {/* Primary Action Button (Sign In) */}
+            {!isSignUp && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '2px 0' }}>
+                <input
+                  id="rememberMe"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  style={{ width: '16px', height: '16px', borderRadius: '4px', accentColor: '#0B4F3C', cursor: 'pointer' }}
+                />
+                <label htmlFor="rememberMe" style={{ fontSize: '12px', color: '#4B5563', cursor: 'pointer' }}>
+                  Keep me signed in for 30 days
+                </label>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingTop: '4px' }}>
               <button
                 type="submit"
                 disabled={loading}
-                style={{ backgroundColor: '#135238' }}
-                className="w-full h-11 px-4 rounded-lg text-white font-semibold text-sm transition duration-150 ease-out hover:opacity-95 hover:shadow-sm active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 shadow-xs"
+                style={{ width: '100%', height: '46px', borderRadius: '12px', backgroundColor: '#0B4F3C', color: '#ffffff', fontWeight: '600', fontSize: '13px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(11, 79, 60, 0.2)' }}
               >
                 {loading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div style={{ width: '16px', height: '16px', border: '2px solid #ffffff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                 ) : (
-                  <span>{isSignUp ? 'Create Merchant Account' : 'Sign In'}</span>
+                  <span>{isSignUp ? 'Create Merchant Account →' : 'Sign In →'}</span>
                 )}
               </button>
 
-              {/* Secondary Action Button (Google) */}
+              {/* Clean Horizontal Divider */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0' }}>
+                <div style={{ flex: 1, height: '1px', backgroundColor: '#E5E7EB' }} />
+                <span style={{ fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.1em' }}>OR</span>
+                <div style={{ flex: 1, height: '1px', backgroundColor: '#E5E7EB' }} />
+              </div>
+
               <button
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={googleLoading}
-                className="w-full h-11 px-4 rounded-lg bg-white border border-[#CBD5E1] text-[#1F2937] font-medium text-sm hover:bg-[#F9FAFB] hover:border-[#94A3B8] active:scale-[0.99] transition duration-150 ease-out flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60 shadow-xs"
+                style={{ width: '100%', height: '46px', borderRadius: '12px', backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', color: '#374151', fontWeight: '600', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
               >
                 {googleLoading ? (
-                  <div className="w-4 h-4 border-2 border-[#135238] border-t-transparent rounded-full animate-spin" />
+                  <div style={{ width: '16px', height: '16px', border: '2px solid #0B4F3C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                 ) : (
                   <>
-                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                      <path
-                        fill="#4285F4"
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      />
-                      <path
-                        fill="#34A853"
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      />
-                      <path
-                        fill="#FBBC05"
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                      />
-                      <path
-                        fill="#EA4335"
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                      />
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                     </svg>
                     <span>Continue with Google</span>
                   </>
                 )}
               </button>
             </div>
-
-            {/* Signup text with 16-20px spacing from Google button */}
-            <div className="mt-5 text-center">
-              <p className="text-xs sm:text-sm text-[#4B5563]">
-                {isSignUp ? "Already have an account? " : "Don't have an account? "}
-                <button
-                  type="button"
-                  onClick={toggleAuthMode}
-                  className="font-medium text-[#135238] underline hover:text-[#093824] transition-colors cursor-pointer ml-1 inline-block"
-                >
-                  {isSignUp ? 'Sign in to existing account' : 'Register a new merchant account'}
-                </button>
-              </p>
-            </div>
           </form>
 
-          {/* Security Note with 8-12px spacing from signup text */}
-          <div className="mt-2.5 flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
-            <svg className="w-3.5 h-3.5 text-[#135238] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span>Secured via <span className="underline">Supabase Auth</span> &amp; 256-bit TLS</span>
+          <div style={{ textAlign: 'center', fontSize: '12px', color: '#6B7280', paddingTop: '8px' }}>
+            {isSignUp ? 'Already have an account?' : 'New to PayLens?'}{' '}
+            <button
+              type="button"
+              onClick={toggleAuthMode}
+              style={{ fontWeight: '700', color: '#111827', textDecoration: 'underline', border: 'none', background: 'none', cursor: 'pointer' }}
+            >
+              {isSignUp ? 'Sign in to existing account' : 'Create an account'}
+            </button>
           </div>
-        </div>
-      </div>
-
-      {/* Right Column: Deep Green Illustration Panel */}
-      <div
-        className="w-full lg:w-1/2 min-h-[480px] lg:min-h-screen flex flex-col items-center justify-center p-8 lg:p-16 text-center text-white"
-        style={{ backgroundColor: '#133D29' }}
-      >
-        <div className="max-w-md mx-auto flex flex-col items-center justify-center">
-          {/* Isometric Graphic */}
-          <div className="mb-6 w-full max-w-[320px] sm:max-w-[360px] flex items-center justify-center">
-            <img
-              src={resilienceGraphic}
-              alt="Zero-Loss Payment Resilience Architecture"
-              className="w-full h-auto object-contain select-none pointer-events-none drop-shadow-xl"
-            />
-          </div>
-
-          {/* Heading */}
-          <h2
-            style={{ color: '#ffffff' }}
-            className="text-2xl sm:text-3xl font-bold tracking-tight mb-3 font-['Space_Grotesk',sans-serif] text-white"
-          >
-            Zero-Loss Payment Resilience
-          </h2>
-
-          {/* Body */}
-          <p className="text-sm text-white/80 leading-relaxed max-w-[400px] mx-auto">
-            PayLens intercepts failed Razorpay checkout events in real time, classifies failure root causes using Google Gemini, and triggers personalized payment recovery links to protect merchant GMV.
-          </p>
         </div>
       </div>
     </div>

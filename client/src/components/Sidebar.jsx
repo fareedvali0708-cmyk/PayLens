@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -5,6 +6,7 @@ export default function Sidebar({ isOpen = false, onClose = () => { } }) {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [hoveredKey, setHoveredKey] = useState(null)
 
   async function handleSignOut() {
     try {
@@ -16,195 +18,328 @@ export default function Sidebar({ isOpen = false, onClose = () => { } }) {
     }
   }
 
-  const isOverviewActive = location.pathname === '/dashboard' && !location.search
-  const isRecoveryActive = location.pathname === '/dashboard' && location.search.includes('RECOVERED')
-  const isAnalyticsActive = location.pathname === '/dashboard' && location.search.includes('ALL')
-  const isSettingsActive = location.pathname === '/settings'
+  const isOverviewActive =
+    location.pathname === '/app/overview' ||
+    (location.pathname === '/dashboard' && !location.search)
+  const isRecoveryActive =
+    location.pathname === '/app/recovery' || location.pathname === '/recovery'
+  const isAnalyticsActive =
+    location.pathname === '/app/analytics' || location.pathname === '/analytics'
+  const isSettingsActive =
+    location.pathname === '/app/settings' || location.pathname === '/settings'
 
-  const getItemClass = (isActive) =>
-    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all duration-150 cursor-pointer ${isActive
-      ? 'bg-white/20 text-white shadow-sm font-bold border-l-2 border-emerald-400 pl-3'
-      : 'text-white/70 hover:text-white hover:bg-white/10'
-    }`
+  const navItems = [
+    {
+      key: 'overview',
+      label: 'Overview',
+      to: '/app/overview',
+      end: true,
+      active: isOverviewActive,
+      icon: (
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="3" width="7" height="7" rx="1.5" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" />
+        </svg>
+      ),
+    },
+    {
+      key: 'recovery',
+      label: 'Recovery',
+      to: '/app/recovery',
+      active: isRecoveryActive,
+      icon: (
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <polyline points="1 4 1 10 7 10" />
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+        </svg>
+      ),
+    },
+    {
+      key: 'analytics',
+      label: 'Analytics',
+      to: '/app/analytics',
+      active: isAnalyticsActive,
+      icon: (
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <line x1="18" y1="20" x2="18" y2="10" />
+          <line x1="12" y1="20" x2="12" y2="4" />
+          <line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+      ),
+    },
+    {
+      key: 'settings',
+      label: 'Settings',
+      to: '/app/settings',
+      active: isSettingsActive,
+      icon: (
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+        </svg>
+      ),
+    },
+  ]
 
   return (
     <>
-      {/* Mobile Backdrop Overlay */}
+      {/* Mobile Overlay */}
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 md:hidden transition-opacity duration-300"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(17, 24, 39, 0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 40,
+          }}
           aria-hidden="true"
         />
       )}
 
-      {/* Sidebar Navigation Drawer */}
+      {/* Sidebar Navigation */}
       <aside
-        className={`fixed md:sticky top-0 left-0 bottom-0 md:bottom-auto h-screen w-[232px] shrink-0 flex flex-col z-40 transition-transform duration-300 ease-in-out md:translate-x-0 ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
-          }`}
         style={{
-          width: '232px',
-          minWidth: '232px',
-          maxWidth: '232px',
-          backgroundColor: '#092D1B',
+          position: 'sticky',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          height: '100vh',
+          width: '260px',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          zIndex: 40,
+          backgroundColor: '#F3F4F1',
+          borderRight: '1px solid #E2E8F0',
+          boxShadow: '2px 0 12px rgba(0, 0, 0, 0.02)',
+          transition: 'transform 300ms ease-in-out',
+          overflow: 'hidden',
         }}
         aria-label="Merchant Navigation Sidebar"
       >
-        {/* Header / Logo */}
-        <div className="px-6 pt-7 pb-6 flex items-center justify-between border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shadow-xs border border-white/15 shrink-0"
-              role="img"
-              aria-label="PayLens Logo"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div>
-              <span className="text-white font-['Space_Grotesk',sans-serif] text-lg font-bold tracking-tight block leading-none">
-                PayLens
-              </span>
-              <span className="text-[10px] text-white/50 tracking-widest uppercase font-semibold">
-                Recovery Console
-              </span>
-            </div>
+        {/* Brand Header with Generous Spacing */}
+        <div
+          style={{
+            padding: '28px 24px 22px 24px',
+            borderBottom: '1px solid rgba(209, 213, 219, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+          }}
+        >
+          {/* Logo Badge */}
+          <div
+            style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #0B4F3C 0%, #053326 100%)',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: "'JetBrains Mono', monospace",
+              fontWeight: '700',
+              fontSize: '16px',
+              flexShrink: 0,
+              boxShadow: '0 4px 14px rgba(11, 79, 60, 0.35)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+            }}
+            role="img"
+            aria-label="PayLens Logo"
+          >
+            PL
           </div>
 
-          {/* Close button on mobile */}
+          {/* Title & Subtitle block */}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <span
+              style={{
+                display: 'block',
+                color: '#111827',
+                fontWeight: '800',
+                fontSize: '20px',
+                letterSpacing: '-0.03em',
+                lineHeight: '1.1',
+              }}
+            >
+              PayLens
+            </span>
+            <span
+              style={{
+                display: 'block',
+                fontSize: '10px',
+                color: '#6B7280',
+                fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                fontWeight: '700',
+                marginTop: '4px',
+              }}
+            >
+              RECOVERY CONSOLE
+            </span>
+          </div>
+
           <button
             type="button"
             onClick={onClose}
-            className="md:hidden p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition cursor-pointer"
-            aria-label="Close navigation sidebar"
+            style={{
+              display: 'none',
+              padding: '6px',
+              borderRadius: '8px',
+              color: '#6B7280',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+            aria-label="Close sidebar"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto font-['Inter',sans-serif]">
-          {/* Overview */}
-          <NavLink
-            to="/dashboard"
-            end
-            onClick={onClose}
-            className={getItemClass(isOverviewActive)}
-          >
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              className={isOverviewActive ? 'text-white' : 'text-white/70'}
-            >
-              <rect x="3" y="3" width="7" height="7" rx="1.5" />
-              <rect x="14" y="3" width="7" height="7" rx="1.5" />
-              <rect x="3" y="14" width="7" height="7" rx="1.5" />
-              <rect x="14" y="14" width="7" height="7" rx="1.5" />
-            </svg>
-            <span>Overview</span>
-          </NavLink>
+        {/* Primary Navigation */}
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '24px 18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {navItems.map((item) => {
+            const isHovered = hoveredKey === item.key
+            const isActive = item.active
 
-          {/* Recovery */}
-          <NavLink
-            to="/dashboard?filter=RECOVERED"
-            onClick={onClose}
-            className={getItemClass(isRecoveryActive)}
-          >
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              className={isRecoveryActive ? 'text-white' : 'text-white/70'}
-            >
-              <polyline points="1 4 1 10 7 10" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-            </svg>
-            <span>Recovery</span>
-          </NavLink>
+            return (
+              <NavLink
+                key={item.key}
+                to={item.to}
+                end={item.end}
+                onClick={onClose}
+                onMouseEnter={() => setHoveredKey(item.key)}
+                onMouseLeave={() => setHoveredKey(null)}
+                style={{
+                  height: '46px',
+                  borderRadius: '12px',
+                  padding: '0 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  fontSize: '14px',
+                  fontWeight: isActive ? '700' : '600',
+                  textDecoration: 'none',
+                  transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+                  cursor: 'pointer',
+                  backgroundColor: isActive
+                    ? '#0B4F3C'
+                    : isHovered
+                    ? '#E2E4DE'
+                    : 'transparent',
+                  backgroundImage: isActive
+                    ? 'linear-gradient(135deg, #0B4F3C 0%, #073D2E 100%)'
+                    : 'none',
+                  color: isActive ? '#ffffff' : isHovered ? '#111827' : '#374151',
+                  boxShadow: isActive ? '0 6px 16px rgba(11, 79, 60, 0.28)' : 'none',
+                }}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    color: isActive ? '#ffffff' : isHovered ? '#0B4F3C' : '#6B7280',
+                    transition: 'all 150ms ease',
+                    transform: isHovered && !isActive ? 'scale(1.1)' : 'scale(1)',
+                  }}
+                >
+                  {item.icon}
+                </span>
+                <span
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    transition: 'transform 150ms ease',
+                    transform: isHovered && !isActive ? 'translateX(3px)' : 'none',
+                  }}
+                >
+                  {item.label}
+                </span>
 
-          {/* Analytics */}
-          <NavLink
-            to="/dashboard?filter=ALL"
-            onClick={onClose}
-            className={getItemClass(isAnalyticsActive)}
-          >
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              className={isAnalyticsActive ? 'text-white' : 'text-white/70'}
-            >
-              <line x1="18" y1="20" x2="18" y2="10" />
-              <line x1="12" y1="20" x2="12" y2="4" />
-              <line x1="6" y1="20" x2="6" y2="14" />
-            </svg>
-            <span>Analytics</span>
-          </NavLink>
-
-          {/* Settings */}
-          <NavLink
-            to="/settings"
-            onClick={onClose}
-            className={getItemClass(isSettingsActive)}
-          >
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              className={isSettingsActive ? 'text-white' : 'text-white/70'}
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-            </svg>
-            <span>Settings</span>
-          </NavLink>
+                {isActive && (
+                  <span
+                    style={{
+                      marginLeft: 'auto',
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      backgroundColor: '#34D399',
+                      boxShadow: '0 0 8px #34D399',
+                    }}
+                  />
+                )}
+              </NavLink>
+            )
+          })}
         </nav>
 
-        {/* User Profile & Sign Out Footer */}
-        <div className="p-4 border-t border-white/10 bg-black/20">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0">
+        {/* Sandbox Test Mode Callout Pill */}
+        <div style={{ padding: '0 16px', marginBottom: '16px' }}>
+          <div
+            style={{
+              padding: '14px',
+              borderRadius: '14px',
+              backgroundColor: '#ECFDF5',
+              border: '1px solid #A7F3D0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#059669', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+              <span style={{ fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", fontWeight: '700', color: '#065F46', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                SANDBOX SIMULATOR
+              </span>
+            </div>
+            <NavLink
+              to="/checkout"
+              onClick={onClose}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '32px',
+                borderRadius: '8px',
+                backgroundColor: '#0B4F3C',
+                color: '#ffffff',
+                fontSize: '11px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                boxShadow: '0 2px 4px rgba(11, 79, 60, 0.2)',
+              }}
+            >
+              Test Checkout Simulator &rarr;
+            </NavLink>
+          </div>
+        </div>
+
+        {/* Account Footer */}
+        <div style={{ padding: '16px', borderTop: '1px solid rgba(209, 213, 219, 0.7)', backgroundColor: 'rgba(226, 228, 222, 0.5)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(11, 79, 60, 0.12)', color: '#0B4F3C', border: '1px solid rgba(11, 79, 60, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '14px', flexShrink: 0 }}>
               {user?.email?.charAt(0).toUpperCase() || 'M'}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">{user?.email || 'Merchant'}</p>
-              <span className="inline-flex items-center gap-1.5 text-[10px] text-emerald-400 font-semibold tracking-wide uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: '12px', fontWeight: '700', color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user?.email || 'Merchant Account'}
+              </p>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#065F46', fontFamily: "'JetBrains Mono', monospace", fontWeight: '700', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#059669' }} />
                 Active Session
               </span>
             </div>
@@ -212,7 +347,23 @@ export default function Sidebar({ isOpen = false, onClose = () => { } }) {
 
           <button
             onClick={handleSignOut}
-            className="flex items-center justify-center gap-2 text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 py-2 px-3 rounded-lg transition-colors w-full cursor-pointer"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              width: '100%',
+              height: '36px',
+              borderRadius: '10px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #D1D5DB',
+              fontSize: '12px',
+              fontWeight: '600',
+              color: '#374151',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+              transition: 'all 150ms ease',
+            }}
           >
             <svg
               width="14"
@@ -223,7 +374,6 @@ export default function Sidebar({ isOpen = false, onClose = () => { } }) {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              aria-hidden="true"
             >
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
               <polyline points="16 17 21 12 16 7" />

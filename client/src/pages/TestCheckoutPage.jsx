@@ -1,17 +1,7 @@
-/**
- * SECURITY / DEMO NOTE:
- * This page is intentionally unauthenticated because it simulates an external,
- * customer-facing e-commerce checkout session. This route is intended for local development
- * and demonstration purposes only and must not be deployed publicly without additional
- * access protection, rate-limiting, or security controls.
- */
-
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { createCheckoutOrder } from '../lib/api'
-import stitchLogo from '../assets/paylens-stitch-logo.png'
 
-// Official on-demand loader for Razorpay Checkout.js
 function loadRazorpayScript() {
   return new Promise((resolve) => {
     if (typeof window !== 'undefined' && window.Razorpay) {
@@ -29,13 +19,13 @@ function loadRazorpayScript() {
 
 export default function TestCheckoutPage() {
   const [loading, setLoading] = useState(false)
-  const [paymentStatus, setPaymentStatus] = useState(null) // 'SUCCESS' | 'FAILED' | 'DISMISSED'
+  const [paymentStatus, setPaymentStatus] = useState(null)
   const [lastError, setLastError] = useState(null)
   const [lastPaymentDetails, setLastPaymentDetails] = useState(null)
 
   const product = {
-    name: 'PayLens Demo Purchase',
-    description: 'Standard E-Commerce Checkout Simulation (Test Mode)',
+    name: 'PayLens Test Checkout Purchase',
+    description: 'Sandbox Payment Recovery Interception Test',
     amount: 1499,
     formattedAmount: '₹1,499.00',
   }
@@ -46,26 +36,22 @@ export default function TestCheckoutPage() {
     setPaymentStatus(null)
 
     try {
-      // 1. Ensure Checkout.js is loaded
       const isLoaded = await loadRazorpayScript()
       if (!isLoaded) {
-        throw new Error('Unable to load Razorpay Checkout SDK. Please check your internet connection.')
+        throw new Error('Unable to load Razorpay Checkout SDK.')
       }
 
-      // 2. Call backend to create standard Razorpay Test Mode order
       const orderData = await createCheckoutOrder(product.amount)
       if (!orderData?.success || !orderData?.order_id || !orderData?.key_id) {
-        throw new Error(orderData?.message || 'Failed to initialize payment order with server.')
+        throw new Error(orderData?.message || 'Failed to initialize payment order.')
       }
 
-      // 3. Configure Razorpay Standard Checkout options
       const options = {
         key: orderData.key_id,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
         name: 'PayLens Store',
         description: product.name,
-        image: stitchLogo,
         order_id: orderData.order_id,
         prefill: {
           name: 'Demo Customer',
@@ -73,7 +59,7 @@ export default function TestCheckoutPage() {
           contact: '+919876543210',
         },
         theme: {
-          color: '#093824', // PayLens Forest Green
+          color: '#004D40',
         },
         modal: {
           ondismiss: () => {
@@ -82,7 +68,6 @@ export default function TestCheckoutPage() {
           },
         },
         handler: (response) => {
-          // Payment Succeeded
           setLoading(false)
           setPaymentStatus('SUCCESS')
           setLastPaymentDetails({
@@ -94,7 +79,6 @@ export default function TestCheckoutPage() {
 
       const rzp = new window.Razorpay(options)
 
-      // 4. Capture intentional payment failures from the modal
       rzp.on('payment.failed', (response) => {
         setLoading(false)
         setPaymentStatus('FAILED')
@@ -108,210 +92,129 @@ export default function TestCheckoutPage() {
         })
       })
 
-      // Open the Razorpay Checkout modal
       rzp.open()
     } catch (err) {
       console.error('[Checkout Error]', err)
-      setLastError(err.message || 'An unexpected error occurred while opening checkout.')
+      setLastError(err.message || 'An unexpected error occurred.')
       setLoading(false)
     }
   }
 
   return (
-    <div
-      className="min-h-screen w-full flex flex-col justify-between items-center p-6 sm:p-10 font-['Inter',sans-serif] text-[#111827]"
-      style={{ backgroundColor: '#F6F7F2' }}
-    >
-      {/* Navigation / Header Bar */}
-      <header className="max-w-4xl w-full mx-auto flex items-center justify-between pb-6 border-b border-[#E5E7EB]">
-        <Link to="/login" className="flex items-center gap-2 hover:opacity-90 transition">
-          <img
-            src={stitchLogo}
-            alt="PayLens"
-            className="h-9 w-auto object-contain select-none"
-          />
-        </Link>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-            Razorpay Test Mode
-          </span>
-          <Link
-            to="/dashboard"
-            className="text-xs font-semibold text-[#093824] hover:underline px-2 py-1"
-          >
-            Go to Merchant Dashboard &rarr;
-          </Link>
+    <div style={{ minHeight: '100vh', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', padding: '32px 24px', backgroundColor: '#F8F9FA', color: '#111827', fontFamily: "'Inter', sans-serif" }}>
+      {/* Top Header */}
+      <header style={{ width: '100%', maxWidth: '540px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '16px', borderBottom: '1px solid #E5E7EB' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#0B4F3C' }} />
+          <span style={{ fontWeight: '700', fontSize: '16px', color: '#111827', letterSpacing: '-0.02em' }}>PayLens</span>
         </div>
+        <span style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: '700', padding: '4px 10px', borderRadius: '6px', backgroundColor: '#FEF3C7', color: '#92400E', border: '1px solid #FDE68A' }}>
+          ENV: SANDBOX TEST MODE
+        </span>
       </header>
 
-      {/* Main Checkout Container */}
-      <main className="max-w-md w-full mx-auto my-auto py-8">
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 sm:p-8 shadow-xs space-y-6">
-          {/* Card Header */}
-          <div>
-            <p className="text-[11px] font-bold tracking-widest text-[#6B7280] uppercase mb-1 font-['Space_Grotesk',sans-serif]">
-              Customer Checkout Simulation
-            </p>
-            <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight font-['Space_Grotesk',sans-serif]">
-              Review &amp; Pay
+      {/* Main Modal Card (Generous 36px Padding & Clean Spacing) */}
+      <main style={{ width: '100%', maxWidth: '540px', margin: 'auto', padding: '24px 0' }}>
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '24px', border: '1px solid #E5E7EB', padding: '36px', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.06)' }}>
+          <div style={{ marginBottom: '24px' }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '8px' }}>
+              STITCH CHECKOUT SIMULATOR
+            </span>
+            <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', letterSpacing: '-0.02em', margin: 0 }}>
+              Review & Pay Order
             </h1>
           </div>
 
-          {/* Product Summary Item */}
-          <div className="bg-[#FAF8F4] border border-[#E5E7EB] rounded-xl p-4 flex items-center justify-between">
-            <div className="space-y-0.5">
-              <h2 className="text-sm font-bold text-[#0F172A]">
-                {product.name}
-              </h2>
-              <p className="text-xs text-[#64748B]">
-                {product.description}
-              </p>
+          {/* Product Summary Card */}
+          <div style={{ padding: '20px', borderRadius: '16px', backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '24px' }}>
+            <div>
+              <h2 style={{ fontSize: '14px', fontWeight: '700', color: '#111827', margin: '0 0 4px 0' }}>{product.name}</h2>
+              <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>{product.description}</p>
             </div>
-            <div className="text-right font-['Space_Grotesk',sans-serif]">
-              <span className="text-lg font-bold text-[#093824]">
-                {product.formattedAmount}
-              </span>
-            </div>
+            <span style={{ fontSize: '22px', fontWeight: '800', fontFamily: "'JetBrains Mono', monospace", color: '#0B4F3C', whiteSpace: 'nowrap' }}>
+              {product.formattedAmount}
+            </span>
           </div>
 
-          {/* Test Mode Failure Simulation Helper Note */}
-          <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3.5 text-xs text-amber-900 leading-relaxed">
-            <div className="flex items-start gap-2">
-              <svg
-                className="w-4 h-4 text-amber-600 shrink-0 mt-0.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              <div>
-                <p className="font-semibold text-amber-950 mb-0.5">
-                  Razorpay Test Mode Active
-                </p>
-                <p className="text-[11px] text-amber-800">
-                  This checkout runs in Razorpay Test Mode. Use Razorpay&apos;s official test payment details to simulate a payment failure.
-                </p>
-              </div>
-            </div>
+          {/* Helper Banner */}
+          <div style={{ padding: '16px', borderRadius: '14px', backgroundColor: '#FEF3C7', border: '1px solid #FDE68A', color: '#92400E', marginBottom: '24px' }}>
+            <p style={{ fontSize: '13px', fontWeight: '700', margin: '0 0 4px 0' }}>Test Failure Simulation</p>
+            <p style={{ fontSize: '12px', color: '#B45309', lineHeight: '1.5', margin: 0 }}>
+              Select Razorpay test failure modes inside the checkout modal to trigger real-time payment interception telemetry.
+            </p>
           </div>
 
-          {/* General Network/API Error Banner */}
-          {lastError && (
-            <div
-              role="alert"
-              className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2 animate-fade-in"
-            >
-              <svg className="w-4 h-4 shrink-0 mt-0.5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <div className="space-y-0.5">
-                <span className="font-semibold">Checkout Error</span>
-                <p className="text-[11px] leading-relaxed">{lastError}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Modal Dismissed Banner */}
-          {paymentStatus === 'DISMISSED' && (
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs flex items-start gap-2 animate-fade-in">
-              <svg className="w-4 h-4 shrink-0 mt-0.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 9l-6 6m0-6l6 6" />
-              </svg>
-              <div className="space-y-0.5">
-                <span className="font-semibold">Checkout window closed</span>
-                <p className="text-[11px] text-slate-600">
-                  Payment was cancelled before completion. You can click below to retry.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Payment Failed Feedback Banner */}
+          {/* Failure Alert */}
           {paymentStatus === 'FAILED' && lastPaymentDetails && (
-            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-900 space-y-2 animate-fade-in text-xs">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-mono font-bold">
-                  {lastPaymentDetails.error_code}
-                </span>
-                <span className="font-bold">Payment Interrupted</span>
-              </div>
-              <p className="text-[11px] text-red-800 leading-relaxed">
+            <div style={{ padding: '16px', borderRadius: '14px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ fontWeight: '700', fontSize: '13px', fontFamily: "'JetBrains Mono', monospace" }}>
+                🔴 Payment Failed ({lastPaymentDetails.error_code})
+              </span>
+              <p style={{ fontSize: '12px', color: '#B91C1C', margin: 0 }}>
                 {lastPaymentDetails.error_description}
               </p>
-              <div className="pt-2 border-t border-red-200/70 text-[11px] text-red-800 flex flex-col gap-1">
-                <div>
-                  <span className="text-[#64748B]">Order ID: </span>
-                  <span className="font-mono">{lastPaymentDetails.order_id}</span>
-                </div>
-                <div className="mt-1 text-emerald-800 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
-                  <strong>✨ PayLens Integration:</strong> This payment failure event was transmitted to your webhook pipeline. Check your{' '}
-                  <Link to="/dashboard" className="font-bold underline text-[#093824]">
-                    PayLens Dashboard
-                  </Link>{' '}
-                  to view failure classification and initiate automated recovery.
-                </div>
+              <div style={{ paddingTop: '10px', borderTop: '1px solid #FCA5A5', fontSize: '12px', color: '#065F46', fontWeight: '600' }}>
+                ✨ Transmitted to PayLens Webhook Pipeline.{' '}
+                <Link to="/app/overview" style={{ textDecoration: 'underline', fontWeight: '700', color: '#0B4F3C' }}>
+                  View in Dashboard &rarr;
+                </Link>
               </div>
             </div>
           )}
 
-          {/* Payment Succeeded Banner */}
+          {/* Success Alert */}
           {paymentStatus === 'SUCCESS' && lastPaymentDetails && (
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-2 animate-fade-in text-xs">
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="font-bold">Payment Successful</span>
-              </div>
-              <p className="text-[11px] text-emerald-800 font-mono">
+            <div style={{ padding: '16px', borderRadius: '14px', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', color: '#065F46', marginBottom: '24px' }}>
+              <span style={{ fontWeight: '700', fontSize: '13px', fontFamily: "'JetBrains Mono', monospace", display: 'block', marginBottom: '4px' }}>
+                🟢 Payment Successful!
+              </span>
+              <p style={{ fontSize: '12px', fontFamily: "'JetBrains Mono', monospace", color: '#047857', margin: 0 }}>
                 Payment ID: {lastPaymentDetails.payment_id}
               </p>
             </div>
           )}
 
-          {/* Primary Action Button */}
-          <div>
-            <button
-              type="button"
-              onClick={handlePayWithRazorpay}
-              disabled={loading}
-              style={{ backgroundColor: '#093824' }}
-              className="w-full py-3 px-4 rounded-xl text-white font-semibold text-sm transition duration-150 hover:opacity-95 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 shadow-xs"
+          {lastError && (
+            <div style={{ padding: '14px 16px', borderRadius: '12px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontSize: '12px', fontWeight: '600', marginBottom: '24px' }}>
+              {lastError}
+            </div>
+          )}
+
+          {/* Action Button */}
+          <button
+            type="button"
+            onClick={handlePayWithRazorpay}
+            disabled={loading}
+            style={{
+              width: '100%',
+              height: '48px',
+              borderRadius: '9999px',
+              backgroundColor: '#0B4F3C',
+              color: '#ffffff',
+              fontSize: '14px',
+              fontWeight: '600',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(11, 79, 60, 0.25)',
+              marginBottom: '16px',
+            }}
+          >
+            {loading ? 'Opening Razorpay Modal...' : 'Pay with Razorpay →'}
+          </button>
+
+          <div style={{ textAlign: 'center' }}>
+            <Link
+              to="/app/overview"
+              style={{ fontSize: '13px', fontWeight: '600', color: '#0B4F3C', textDecoration: 'none' }}
             >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Preparing Checkout...</span>
-                </>
-              ) : (
-                <span>Pay with Razorpay</span>
-              )}
-            </button>
+              Back to Merchant Dashboard &rarr;
+            </Link>
           </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="max-w-4xl w-full mx-auto text-center pt-6 border-t border-[#E5E7EB] text-xs text-[#6B7280]">
-        <div className="flex items-center justify-center gap-1.5 mb-1">
-          <svg className="w-3.5 h-3.5 text-[#093824]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
-          <span>Secured via Razorpay Payment Gateway &amp; 256-bit SSL</span>
-        </div>
-        <p className="text-[11px] text-[#9CA3AF]">
-          PayLens Recovery Simulation Environment &bull; Test Mode Only
-        </p>
+      <footer style={{ textAlign: 'center', fontSize: '12px', color: '#9CA3AF', fontFamily: "'JetBrains Mono', monospace" }}>
+        PayLens Recovery Test Environment &bull; Razorpay Sandbox Rail
       </footer>
     </div>
   )

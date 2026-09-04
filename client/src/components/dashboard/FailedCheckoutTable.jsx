@@ -1,3 +1,16 @@
+import { Link } from 'react-router-dom'
+
+function formatTimestamp(dateStr) {
+  if (!dateStr) return '—'
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export default function FailedCheckoutTable({
   transactions = [],
   retryingId,
@@ -7,61 +20,73 @@ export default function FailedCheckoutTable({
   searchQuery,
 }) {
   return (
-    <div className="bg-white rounded-[12px] border border-[#E2E1DA] shadow-xs overflow-hidden w-full">
-      {/* Scroll container for internal responsiveness; prevents page-level horizontal scrolling */}
-      <div className="w-full overflow-x-auto">
-        <table className="w-full min-w-[740px] text-left table-fixed border-collapse">
-          {/* Column Proportions: 27% + 28% + 13% + 14% + 18% = 100% */}
+    <div style={{ backgroundColor: '#ffffff', border: '1px solid #E5E7EB', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)', overflow: 'hidden', width: '100%' }}>
+      <div style={{ width: '100%', overflowX: 'auto' }}>
+        <table style={{ width: '100%', minWidth: '760px', textAlign: 'left', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
           <colgroup>
-            <col style={{ width: '27%' }} />
-            <col style={{ width: '28%' }} />
-            <col style={{ width: '13%' }} />
+            <col style={{ width: '26%' }} />
+            <col style={{ width: '24%' }} />
             <col style={{ width: '14%' }} />
-            <col style={{ width: '18%' }} />
+            <col style={{ width: '14%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '10%' }} />
           </colgroup>
 
-          {/* Table Header: height 42–46px, 11–12px semibold muted, 14–16px horizontal padding */}
-          <thead className="bg-[#FAF8F5] border-b border-[#E2E1DA]">
-            <tr className="text-[11px] sm:text-[12px] font-semibold tracking-wider text-[#64748B] h-[44px]">
-              <th scope="col" className="px-3.5 sm:px-4 align-middle" style={{ paddingLeft: '16px', paddingRight: '14px' }}>
-                TRANSACTION ID
-              </th>
-              <th scope="col" className="px-3.5 sm:px-4 align-middle" style={{ paddingLeft: '14px', paddingRight: '14px' }}>
-                CUSTOMER
-              </th>
-              <th scope="col" className="px-3.5 sm:px-4 align-middle" style={{ paddingLeft: '14px', paddingRight: '14px' }}>
-                AMOUNT
-              </th>
-              <th scope="col" className="px-3.5 sm:px-4 align-middle" style={{ paddingLeft: '14px', paddingRight: '14px' }}>
-                STATUS
-              </th>
-              <th
-                scope="col"
-                className="text-right align-middle"
-                style={{ paddingLeft: '12px', paddingRight: '16px' }}
-              >
-                ACTION
-              </th>
+          <thead>
+            <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB', height: '44px', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: '700', color: '#6B7280', letterSpacing: '0.06em' }}>
+              <th scope="col" style={{ padding: '0 20px', verticalAlign: 'middle' }}>TRANSACTION</th>
+              <th scope="col" style={{ padding: '0 20px', verticalAlign: 'middle' }}>CUSTOMER</th>
+              <th scope="col" style={{ padding: '0 20px', verticalAlign: 'middle' }}>AMOUNT</th>
+              <th scope="col" style={{ padding: '0 20px', verticalAlign: 'middle' }}>STATUS</th>
+              <th scope="col" style={{ padding: '0 20px', verticalAlign: 'middle' }}>DETECTED</th>
+              <th scope="col" style={{ padding: '0 20px', textAlign: 'right', verticalAlign: 'middle' }}>ACTION</th>
             </tr>
           </thead>
 
-          {/* Table Body: 48–52px height per row, 14–16px cell padding, vertical-align middle */}
-          <tbody className="divide-y divide-[#F1F5F9]">
+          <tbody>
             {transactions.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-14 px-6 text-center text-[#64748B]">
-                  <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
-                    <div className="w-10 h-10 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#94A3B8] mb-3">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <td colSpan={6} style={{ padding: '64px 32px', textAlign: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', maxWidth: '440px', margin: '0 auto' }}>
+                    <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: '#F3F4F6', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', marginBottom: '16px' }}>
+                      <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75">
+                        <rect x="3" y="4" width="18" height="16" rx="2" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                        <line x1="7" y1="15" x2="11" y2="15" />
                       </svg>
                     </div>
-                    <p className="text-sm font-semibold text-[#0F172A]">No failed checkouts</p>
-                    <p className="text-xs text-[#64748B] mt-1 leading-relaxed">
-                      {searchQuery
-                        ? 'No transactions matched your search criteria. Try modifying your search or filter.'
-                        : 'All intercepted checkouts have succeeded or been fully recovered.'}
+
+                    <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#374151', marginBottom: '8px' }}>
+                      {searchQuery ? 'NO MATCHING TRANSACTIONS' : 'NO PAYMENT ACTIVITY YET'}
                     </p>
+
+                    <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: '1.6', marginBottom: '24px' }}>
+                      {searchQuery
+                        ? `No transactions match "${searchQuery}". Try modifying your filter.`
+                        : 'Failed checkouts will appear here when PayLens receives its first payment failure webhook from Razorpay.'}
+                    </p>
+
+                    {!searchQuery && (
+                      <Link
+                        to="/checkout"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '12px 28px',
+                          borderRadius: '9999px',
+                          backgroundColor: '#0B4F3C',
+                          color: '#ffffff',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          textDecoration: 'none',
+                          boxShadow: '0 4px 12px rgba(11, 79, 60, 0.25)',
+                          transition: 'all 150ms ease-in-out',
+                        }}
+                      >
+                        <span>Open Test Checkout (Simulation) &rarr;</span>
+                      </Link>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -71,134 +96,117 @@ export default function FailedCheckoutTable({
                 const isRecovered = tx.status === 'RECOVERED'
                 const displayId = tx.razorpay_order_id || tx.id
 
+                let statusBg = '#F3F4F6'
+                let statusColor = '#374151'
+                let statusBorder = '#E5E7EB'
+                let statusLabel = tx.status || 'PENDING'
+
+                if (tx.status === 'PENDING') {
+                  statusBg = '#FEF2F2'
+                  statusColor = '#991B1B'
+                  statusBorder = '#FECACA'
+                  statusLabel = 'Pending'
+                } else if (tx.status === 'RECOVERY_SENT') {
+                  statusBg = '#ECFDF5'
+                  statusColor = '#065F46'
+                  statusBorder = '#A7F3D0'
+                  statusLabel = 'Link Sent'
+                } else if (tx.status === 'RECOVERED') {
+                  statusBg = '#F0FDF4'
+                  statusColor = '#166534'
+                  statusBorder = '#BBF7D0'
+                  statusLabel = 'Recovered'
+                } else if (tx.status === 'IGNORED') {
+                  statusBg = '#F3F4F6'
+                  statusColor = '#4B5563'
+                  statusBorder = '#E5E7EB'
+                  statusLabel = 'Ignored'
+                }
+
                 return (
                   <tr
                     key={tx.id}
-                    className="hover:bg-[#FAF8F5]/80 transition-colors duration-150 h-[50px]"
-                    style={{ height: '50px' }}
+                    style={{ borderBottom: '1px solid #F3F4F6', height: '56px' }}
                   >
-                    {/* 1. Transaction ID: 12–13px monospace, ellipsis, full tooltip */}
-                    <td
-                      className="align-middle"
-                      style={{ paddingLeft: '16px', paddingRight: '14px' }}
-                    >
-                      <span
-                        className="font-mono text-xs sm:text-[13px] text-[#334155] truncate block max-w-full cursor-default select-all"
-                        title={displayId}
-                      >
-                        {displayId}
-                      </span>
+                    {/* Transaction Reference */}
+                    <td style={{ padding: '0 20px', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span
+                          style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', fontWeight: '700', color: '#111827' }}
+                          title={displayId}
+                        >
+                          {displayId}
+                        </span>
+                        <span style={{ fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", color: '#9CA3AF' }}>
+                          {tx.razorpay_payment_id || tx.error_code || 'Direct Checkout'}
+                        </span>
+                      </div>
                     </td>
 
-                    {/* 2. Customer: vertical arrangement (email 13–14px semibold/medium, phone 11–12px muted, 3–4px gap) */}
-                    <td
-                      className="align-middle"
-                      style={{ paddingLeft: '14px', paddingRight: '14px' }}
-                    >
-                      <div className="flex flex-col gap-[3px] min-w-0" style={{ gap: '3px' }}>
+                    {/* Customer */}
+                    <td style={{ padding: '0 20px', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span
-                          className="text-xs sm:text-[13px] font-medium text-[#0F172A] truncate block leading-tight"
-                          title={tx.customer_email || 'Customer'}
+                          style={{ fontSize: '13px', fontWeight: '600', color: '#111827' }}
+                          title={tx.customer_email || 'Direct customer'}
                         >
-                          {tx.customer_email || 'Customer'}
+                          {tx.customer_email || 'Direct customer'}
                         </span>
-                        <span className="text-[11px] font-mono text-[#64748B] truncate block leading-tight">
+                        <span style={{ fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", color: '#9CA3AF' }}>
                           {tx.customer_phone || '—'}
                         </span>
                       </div>
                     </td>
 
-                    {/* 3. Amount: 14–15px semibold, consistent alignment */}
-                    <td
-                      className="align-middle whitespace-nowrap"
-                      style={{ paddingLeft: '14px', paddingRight: '14px' }}
-                    >
-                      <span className="text-xs sm:text-[14px] font-semibold text-[#0F172A] font-['Space_Grotesk',sans-serif]">
+                    {/* Amount */}
+                    <td style={{ padding: '0 20px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '700', fontFamily: "'JetBrains Mono', monospace", color: '#111827' }}>
                         {formatINR(tx.amount)}
                       </span>
                     </td>
 
-                    {/* 4. Status Badge */}
-                    <td
-                      className="align-middle whitespace-nowrap"
-                      style={{ paddingLeft: '14px', paddingRight: '14px' }}
-                    >
-                      {isRecovered ? (
-                        <span
-                          style={{ backgroundColor: '#ECFDF5', color: '#065F46', borderColor: '#A7F3D0', height: '26px', padding: '0 10px' }}
-                          className="inline-flex items-center h-[26px] px-2.5 rounded-full text-xs font-semibold border"
-                        >
-                          Recovered
-                        </span>
-                      ) : tx.status === 'RECOVERY_SENT' ? (
-                        <span
-                          style={{ backgroundColor: '#F0F9FF', color: '#0369A1', borderColor: '#BAE6FD', height: '26px', padding: '0 10px' }}
-                          className="inline-flex items-center h-[26px] px-2.5 rounded-full text-xs font-semibold border"
-                        >
-                          Recovery Sent
-                        </span>
-                      ) : tx.status === 'IGNORED' ? (
-                        <span
-                          style={{ backgroundColor: '#F1F5F9', color: '#475569', borderColor: '#CBD5E1', height: '26px', padding: '0 10px' }}
-                          className="inline-flex items-center h-[26px] px-2.5 rounded-full text-xs font-medium border"
-                        >
-                          Ignored
-                        </span>
-                      ) : (
-                        <span
-                          style={{ backgroundColor: '#FFFBEB', color: '#92400E', borderColor: '#FDE68A', height: '26px', padding: '0 10px' }}
-                          className="inline-flex items-center h-[26px] px-2.5 rounded-full text-xs font-semibold border"
-                        >
-                          Pending
-                        </span>
-                      )}
+                    {/* Status */}
+                    <td style={{ padding: '0 20px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: '6px', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", fontWeight: '700', textTransform: 'uppercase', backgroundColor: statusBg, color: statusColor, border: `1px solid ${statusBorder}` }}>
+                        {statusLabel}
+                      </span>
                     </td>
 
-                    {/* 5. Action Buttons: Retry (dark green) + View (white), gap: 8px */}
-                    <td
-                      className="align-middle text-right whitespace-nowrap"
-                      style={{ paddingLeft: '12px', paddingRight: '16px' }}
-                    >
-                      <div
-                        className="flex items-center justify-end gap-2"
-                        style={{ gap: '8px' }}
-                      >
-                        {/* Primary: Recover / Retry */}
+                    {/* Detected Timestamp */}
+                    <td style={{ padding: '0 20px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", color: '#6B7280' }}>
+                        {formatTimestamp(tx.created_at)}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td style={{ padding: '0 20px', verticalAlign: 'middle', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
                         <button
-                          id={`retry-btn-${tx.id}`}
-                          data-testid="retry-btn"
+                          type="button"
+                          onClick={() => onView(tx)}
+                          style={{ padding: '6px 12px', fontSize: '12px', fontWeight: '600', color: '#374151', backgroundColor: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: '8px', cursor: 'pointer' }}
+                        >
+                          View
+                        </button>
+
+                        <button
                           type="button"
                           onClick={() => onRetry(tx)}
                           disabled={isRetrying || isRecovered}
                           style={{
-                            backgroundColor: isRecovered ? '#94A3B8' : '#093824',
-                            width: '72px',
-                            height: '34px',
-                            padding: '0 12px',
+                            height: '36px',
+                            padding: '0 16px',
+                            borderRadius: '9999px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            border: 'none',
+                            cursor: isRecovered ? 'default' : 'pointer',
+                            backgroundColor: isRecovered ? '#F3F4F6' : '#0B4F3C',
+                            color: isRecovered ? '#9CA3AF' : '#ffffff',
                           }}
-                          className="w-[72px] h-[34px] rounded-lg text-white font-semibold text-xs transition duration-150 hover:opacity-95 hover:shadow-xs active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-xs inline-flex items-center justify-center gap-1.5 shrink-0 select-none"
-                          aria-label={isRecovered ? 'Transaction Recovered' : 'Retry Payment Recovery'}
                         >
-                          {isRetrying && (
-                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          )}
-                          <span>{isRecovered ? 'Recovered' : 'Retry'}</span>
-                        </button>
-
-                        {/* Secondary: View */}
-                        <button
-                          id={`view-btn-${tx.id}`}
-                          data-testid="view-btn"
-                          type="button"
-                          onClick={() => onView(tx)}
-                          style={{
-                            width: '62px',
-                            height: '34px',
-                          }}
-                          className="w-[62px] h-[34px] rounded-lg bg-white border border-[#CBD5E1] text-[#0F172A] font-semibold text-xs hover:bg-[#F8FAFC] hover:border-[#94A3B8] transition duration-150 active:scale-[0.98] cursor-pointer shadow-2xs inline-flex items-center justify-center shrink-0 select-none"
-                          aria-label="View Transaction Diagnostics"
-                        >
-                          View
+                          {isRetrying ? 'Processing...' : isRecovered ? 'Recovered' : 'Recover Now'}
                         </button>
                       </div>
                     </td>

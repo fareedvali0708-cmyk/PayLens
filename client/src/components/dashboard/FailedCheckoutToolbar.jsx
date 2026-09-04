@@ -5,31 +5,28 @@ export default function FailedCheckoutToolbar({
   onSearchChange,
 }) {
   const tabs = [
-    { id: 'ALL', label: 'All' },
-    { id: 'PENDING', label: 'Pending' },
+    { id: 'ALL', label: 'All Transactions' },
+    { id: 'PENDING', label: 'Pending Action' },
     { id: 'RECOVERED', label: 'Recovered' },
     { id: 'IGNORED', label: 'Ignored' },
   ]
 
   return (
-    <div className="w-full mt-[28px]">
-      {/* Section Header: 20–22px title, 13–14px subtitle, mb-14px */}
-      <div className="mb-[14px]">
-        <h2 className="text-[20px] sm:text-[22px] font-semibold text-[#0F172A] font-['Space_Grotesk',sans-serif] tracking-tight leading-tight">
-          Recent Failed Checkouts
+    <div style={{ width: '100%', marginTop: '28px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Section Header */}
+      <div>
+        <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', margin: '0 0 4px 0', letterSpacing: '-0.01em' }}>
+          Recent Intercepted Checkouts
         </h2>
-        <p className="text-[13px] sm:text-[14px] text-[#64748B] mt-1">
+        <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
           Live failed transactions intercepted from Razorpay checkout sessions
         </p>
       </div>
 
-      {/* Toolbar Container: flex, items-center, justify-between, gap-16px, width 100% */}
-      <div
-        className="flex flex-wrap items-center justify-between gap-4 w-full"
-        style={{ gap: '16px' }}
-      >
-        {/* Left: Filter Group with gap: 6px, flex-shrink: 0 */}
-        <div className="flex items-center gap-[6px] shrink-0" style={{ gap: '6px' }}>
+      {/* Toolbar Controls */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', width: '100%' }}>
+        {/* Filter Tabs */}
+        <div style={{ display: 'flex', itemsCenter: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id
             return (
@@ -37,12 +34,19 @@ export default function FailedCheckoutToolbar({
                 key={tab.id}
                 type="button"
                 onClick={() => onTabChange(tab.id)}
-                className={`h-[36px] px-3 rounded-lg text-xs font-semibold tracking-normal transition-all duration-150 cursor-pointer select-none inline-flex items-center justify-center ${
-                  isActive
-                    ? 'bg-[#093824] text-white shadow-xs'
-                    : 'bg-[#FAF8F5] text-[#475569] border border-[#E2E1DA] hover:bg-white hover:text-[#0F172A]'
-                }`}
-                style={{ height: '36px', padding: '8px 12px' }}
+                style={{
+                  height: '38px',
+                  padding: '0 18px',
+                  borderRadius: '9999px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  border: isActive ? 'none' : '1px solid #D1D5DB',
+                  backgroundColor: isActive ? '#0B4F3C' : '#ffffff',
+                  color: isActive ? '#ffffff' : '#374151',
+                  boxShadow: isActive ? '0 2px 4px rgba(11, 79, 60, 0.2)' : '0 1px 2px rgba(0, 0, 0, 0.03)',
+                  transition: 'all 150ms ease-in-out',
+                }}
                 aria-pressed={isActive}
               >
                 {tab.label}
@@ -51,13 +55,17 @@ export default function FailedCheckoutToolbar({
           })}
         </div>
 
-        {/* Right: Search Input (strict width: 240px, max-width: 240px, height: 38px, flex-shrink: 0) */}
-        <div
-          className="relative w-[240px] max-w-[240px] shrink-0"
-          style={{ width: '240px', maxWidth: '240px' }}
-        >
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#94A3B8]">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        {/* Search Input */}
+        <div style={{ position: 'relative', width: '100%', maxWidth: '320px' }}>
+          <div style={{ position: 'absolute', left: '14px', top: '11px', color: '#9CA3AF', pointerEvents: 'none' }}>
+            <svg
+              width="16"
+              height="16"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <circle cx="11" cy="11" r="8" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
             </svg>
@@ -67,17 +75,17 @@ export default function FailedCheckoutToolbar({
             placeholder="Search by ID, email, order..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-[240px] max-w-[240px] h-[38px] pl-9 pr-7 rounded-lg bg-white border border-[#CBD5E1] text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#093824] focus:ring-1 focus:ring-[#093824] transition-all shadow-2xs box-border"
-            style={{ height: '38px', padding: '0 12px 0 36px', width: '240px', maxWidth: '240px' }}
+            style={{ width: '100%', height: '38px', paddingLeft: '40px', paddingRight: '36px', borderRadius: '9999px', border: '1px solid #D1D5DB', backgroundColor: '#ffffff', fontSize: '12px', color: '#111827', outline: 'none' }}
+            aria-label="Search failed transactions"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => onSearchChange('')}
-              className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-[#94A3B8] hover:text-[#0F172A] cursor-pointer"
+              style={{ position: 'absolute', right: '12px', top: '11px', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               aria-label="Clear search"
             >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>

@@ -29,12 +29,14 @@ export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
 
   const addToast = useCallback((message, type = 'info', duration = 4000) => {
-    const id = Date.now() + Math.random()
-    setToasts((prev) => [...prev, { id, message, type }])
-
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id))
-    }, duration)
+    setToasts((prev) => {
+      if (prev.some((t) => t.message === message && t.type === type)) return prev
+      const id = Date.now() + Math.random()
+      setTimeout(() => {
+        setToasts((prevToasts) => prevToasts.filter((t) => t.id !== id))
+      }, duration)
+      return [...prev, { id, message, type }]
+    })
   }, [])
 
   const removeToast = useCallback((id) => {
@@ -45,19 +47,20 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={{ addToast }}>
       {children}
 
-      {/* Toast container */}
-      <div className="fixed top-6 right-6 z-50 flex flex-col gap-3 pointer-events-none">
+      {/* Positioned at bottom-right so it NEVER overlaps top header controls */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2.5 pointer-events-none">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            style={{ animation: 'toast-in 0.3s ease-out both' }}
-            className="pointer-events-auto flex items-center gap-3 px-4 py-3 bg-surface rounded-lg border border-border shadow-lg max-w-sm"
+            style={{ animation: 'toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both' }}
+            className="pointer-events-auto flex items-start gap-3 px-4 py-3 bg-white rounded-xl border border-stone-300 shadow-2xl max-w-sm"
+            role={toast.type === 'error' ? 'alert' : 'status'}
           >
-            <span className="shrink-0">{ICONS[toast.type]}</span>
-            <p className="text-sm text-text leading-snug">{toast.message}</p>
+            <span className="shrink-0 mt-0.5">{ICONS[toast.type]}</span>
+            <p className="text-xs text-stone-900 leading-snug flex-1 min-w-0 font-medium">{toast.message}</p>
             <button
               onClick={() => removeToast(toast.id)}
-              className="shrink-0 ml-2 text-text-muted hover:text-text transition-colors"
+              className="shrink-0 ml-1 p-0.5 text-stone-400 hover:text-stone-700 transition-colors cursor-pointer"
               aria-label="Dismiss"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">

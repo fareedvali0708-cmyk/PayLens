@@ -6,33 +6,27 @@ export default function AppLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen w-full bg-[#F3F2EB]" style={{ backgroundColor: '#F3F2EB' }}>
-      {/* Mobile Top Header */}
-      <header
-        className="md:hidden flex items-center justify-between px-5 py-3.5 border-b border-white/10 sticky top-0 z-30 shrink-0"
-        style={{ backgroundColor: '#092D1B' }}
-      >
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center border border-white/15">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+    <div className="flex flex-col md:grid md:grid-cols-[260px_minmax(0,1fr)] min-h-screen w-full bg-[#F8F9FA]">
+      {/* Mobile Header */}
+      <header className="md:hidden flex items-center justify-between px-5 py-3.5 bg-[#EFEFEA] border-b border-stone-300/60 sticky top-0 z-30 shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-[#0B4F3C] text-white flex items-center justify-center font-bold text-xs shrink-0">
+            PL
           </div>
-          <span className="text-white font-['Space_Grotesk',sans-serif] text-base font-bold tracking-tight">
-            PayLens
-          </span>
+          <div className="min-w-0">
+            <span className="block text-stone-900 font-bold text-base tracking-tight leading-none">
+              PayLens
+            </span>
+            <span className="block text-[9px] text-stone-500 font-mono tracking-[0.14em] uppercase font-semibold mt-1">
+              RECOVERY CONSOLE
+            </span>
+          </div>
         </div>
 
         <button
           type="button"
           onClick={() => setIsMobileMenuOpen(true)}
-          className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition cursor-pointer"
+          className="p-2 rounded-lg text-stone-700 hover:text-stone-900 hover:bg-stone-200/60 transition cursor-pointer"
           aria-label="Open navigation menu"
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -43,21 +37,12 @@ export default function AppLayout() {
         </button>
       </header>
 
-      {/* Responsive Sidebar Drawer */}
-      <Sidebar
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
-      />
+      {/* Sidebar Navigation */}
+      <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
-      {/* Main Content Area */}
-      <main
-        className="flex-1 min-w-0 w-full min-h-screen box-border overflow-x-clip pt-6 sm:pt-7 pb-8 bg-[#F3F2EB]"
-        style={{ backgroundColor: '#F3F2EB', overflowX: 'clip' }}
-      >
-        <div
-          className="w-full max-w-[1360px] mx-auto min-w-0 box-border px-[28px]"
-          style={{ maxWidth: '1360px', paddingLeft: '28px', paddingRight: '28px' }}
-        >
+      {/* Main Content Area - Generous 40px+ left spacing from sidebar divider line */}
+      <main className="flex-1 min-w-0 w-full min-h-screen py-8 pl-10 pr-6 sm:pl-14 sm:pr-10 lg:pl-16 lg:pr-12 flex justify-center">
+        <div className="w-full max-w-[1536px] mx-auto space-y-8 min-w-0">
           <Outlet />
         </div>
       </main>

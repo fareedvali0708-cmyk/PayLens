@@ -13,7 +13,7 @@ router.get("/", authMiddleware, async (req, res, next) => {
   try {
     const { data: merchant, error } = await req.supabase
       .from("merchants")
-      .select("id, business_name, razorpay_key_id, razorpay_key_secret, razorpay_webhook_secret, created_at, updated_at")
+      .select("id, business_name, razorpay_key_id, razorpay_key_secret, razorpay_webhook_secret, created_at")
       .eq("id", req.user.id)
       .maybeSingle();
 

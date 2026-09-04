@@ -128,10 +128,10 @@ export default function DashboardPage() {
         setSelectedTx(updatedTx)
       }
 
-      // Copy link to clipboard if generated
+      // Open link in new browser tab if generated
       if (linkUrl) {
-        navigator.clipboard.writeText(linkUrl)
-        addToast(`Recovery link generated! Copied to clipboard: ${linkUrl.slice(0, 32)}...`, 'success')
+        window.open(linkUrl, '_blank', 'noopener,noreferrer')
+        addToast('Recovery link opened in a new tab.', 'success')
       } else {
         addToast('Recovery initiated successfully.', 'success')
       }
@@ -186,12 +186,12 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[65vh] space-y-4">
-        <div className="w-10 h-10 border-3 border-[#093824] border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-[3px] border-[#0B4F3C] border-t-transparent rounded-full animate-spin" />
         <div className="text-center">
-          <p className="text-xs font-semibold text-[#0F172A] tracking-wide uppercase font-['Space_Grotesk',sans-serif]">
+          <p className="text-xs font-semibold text-stone-900 tracking-wide uppercase font-mono">
             Loading merchant intelligence
           </p>
-          <p className="text-[11px] text-[#64748B] mt-1">
+          <p className="text-[11px] text-stone-500 mt-1">
             Intercepting telemetry and calculating live recovery metrics...
           </p>
         </div>
@@ -199,16 +199,17 @@ export default function DashboardPage() {
     )
   }
 
+  // Dynamic real-time metrics (NO hardcoded demo fallbacks!)
   const activeLinksCount =
-    summary.recovery_sent_count ||
-    transactions.filter((t) => t.status === 'RECOVERY_SENT').length ||
-    4
+    summary.recovery_sent_count ??
+    transactions.filter((t) => t.status === 'RECOVERY_SENT').length ??
+    0
 
   const totalCapturedEvents =
-    summary.total_failed_count || transactions.length || 63
+    summary.total_failed_count ?? transactions.length ?? 0
 
   return (
-    <div className="flex flex-col w-full min-w-0 font-['Inter',sans-serif]">
+    <div className="flex flex-col w-full min-w-0">
       {/* 1. Command-Center Top Header */}
       <DashboardHeader
         onSync={() => fetchData(true)}
@@ -231,7 +232,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* 4. Operational Section: Recent Failed Checkouts (margin-top: 28px in toolbar) */}
+      {/* 4. Operational Section: Recent Failed Checkouts */}
       <div className="flex flex-col w-full">
         <FailedCheckoutToolbar
           activeTab={activeTab}
@@ -240,8 +241,8 @@ export default function DashboardPage() {
           onSearchChange={setSearchQuery}
         />
 
-        {/* Operations Transactions Table (14px below toolbar) */}
-        <div className="mt-3.5 w-full">
+        {/* Operations Transactions Table */}
+        <div className="mt-4 w-full">
           <FailedCheckoutTable
             transactions={filteredTransactions}
             retryingId={retryingId}
