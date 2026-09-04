@@ -19,11 +19,7 @@ const createOrderSchema = z.object({
       (val) => (typeof val === "string" && val.trim() !== "" ? val.trim().toUpperCase() : "INR"),
       z.string().default("INR")
     ),
-  merchant_id: z
-    .preprocess(
-      (val) => (typeof val === "string" && val.trim() !== "" ? val.trim() : DEFAULT_MERCHANT_ID),
-      z.string().uuid().default(DEFAULT_MERCHANT_ID)
-    ),
+  merchant_id: z.string().uuid().optional(),
 });
 
 /**
@@ -73,7 +69,30 @@ router.post("/create-order", async (req, res, next) => {
       });
     }
 
-    const { amount, currency, merchant_id } = parseResult.data;
+    const { amount, currency } = parseResult.data;
+
+    // Resolve merchant identity:
+    // 1. Authenticated session via Bearer token takes absolute precedence.
+    // 2. Client is not permitted to arbitrarily choose or override merchant_id.
+    // 3. Fall back to DEFAULT_MERCHANT_ID only for genuinely unauthenticated/dev flows.
+    let merchant_id = DEFAULT_MERCHANT_ID;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      if (token) {
+        try {
+          const {
+            data: { user },
+            error: authError,
+          } = await supabase.auth.getUser(token);
+          if (user?.id && !authError) {
+            merchant_id = user.id;
+          }
+        } catch (authErr) {
+          console.error("[Checkout Auth Error]", authErr);
+        }
+      }
+    }
     const { client: razorpay, keyId } = await getRazorpayCredentials(merchant_id);
 
     if (!razorpay || !keyId) {

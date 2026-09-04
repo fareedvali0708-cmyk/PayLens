@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { createCheckoutOrder } from '../lib/api'
+import { useAuth } from '../contexts/AuthContext'
 
 function loadRazorpayScript() {
   return new Promise((resolve) => {
@@ -18,6 +19,7 @@ function loadRazorpayScript() {
 }
 
 export default function TestCheckoutPage() {
+  const { token } = useAuth()
   const [loading, setLoading] = useState(false)
   const [paymentStatus, setPaymentStatus] = useState(null)
   const [lastError, setLastError] = useState(null)
@@ -41,7 +43,7 @@ export default function TestCheckoutPage() {
         throw new Error('Unable to load Razorpay Checkout SDK.')
       }
 
-      const orderData = await createCheckoutOrder(product.amount)
+      const orderData = await createCheckoutOrder(product.amount, token)
       if (!orderData?.success || !orderData?.order_id || !orderData?.key_id) {
         throw new Error(orderData?.message || 'Failed to initialize payment order.')
       }

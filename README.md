@@ -1,280 +1,255 @@
 # PayLens
 
-[![CI](https://github.com/fareedvali/PayLens/actions/workflows/ci.yml/badge.svg)](https://github.com/fareedvali/PayLens/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+> Real-time payment failure detection, diagnosis, and recovery for Razorpay merchants.
 
-**Real-time payment failure detection, diagnosis, and recovery for Razorpay merchants.**
+[![CI](https://github.com/fareedvali0708-cmyk/PayLens/actions/workflows/ci.yml/badge.svg)](https://github.com/fareedvali0708-cmyk/PayLens/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
+```
+FAILED PAYMENT → WEBHOOK → DETECTION → DIAGNOSIS → RECOVERY LINK → RETRY → RECOVERED TRANSACTION
+```
 
 ---
 
-## Why PayLens?
+## Navigation
 
-Failed payments are invisible revenue leaks. Most merchants discover them too late, have no idea *why* they failed, and lack the tooling to recover them efficiently.
-
-**PayLens solves this** by intercepting Razorpay payment failures in real time via webhooks, classifying the root cause, surfacing AI-powered diagnostics, and enabling one-click recovery through Razorpay Payment Links — all from a single dashboard.
-
-This is a production-style fintech application built and tested entirely in **Razorpay Test Mode**.
+| Resource | Description | Location |
+| :--- | :--- | :--- |
+| **Architecture** | System design, data flow, and security boundaries | [`docs/architecture.md`](docs/architecture.md) |
+| **Demo Flow** | Step-by-step 3–5 minute Test Mode verification walkthrough | [`docs/demo-flow.md`](docs/demo-flow.md) |
+| **Testing** | Complete 57-test suite breakdown and verification logs | [`docs/testing.md`](docs/testing.md) |
+| **Contributing** | Contributor setup, guidelines, and PR workflow | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| **Security** | Vulnerability reporting and responsible disclosure | [`SECURITY.md`](SECURITY.md) |
 
 ---
 
-## How PayLens Works
+## The Problem
+
+Failed transactions represent a significant, unaddressed source of revenue leakage for digital merchants. When a payment fails:
+1. **Zero Real-Time Visibility:** Merchants typically learn about payment drop-offs hours or days later through aggregate accounting reports.
+2. **Opaque Error Context:** Gateway failure codes (e.g., generic `GATEWAY_ERROR` or `BAD_REQUEST_ERROR`) fail to provide actionable root-cause explanations.
+3. **No Direct Recovery Mechanism:** Without automated intervention, customers abandon checkout workflows entirely rather than re-initiating payment.
+
+---
+
+## The Solution
+
+PayLens creates an automated, closed-loop telemetry and recovery pipeline:
+- **Instant Webhook Ingestion:** Intercepts Razorpay `payment.failed` webhooks via HMAC-authenticated endpoints within milliseconds.
+- **Root-Cause Classification & AI Insights:** Normalizes error codes, maps failure categories (e.g., Bank Downtime, Network Latency, Insufficient Funds), and enriches records via non-blocking Gemini AI analysis.
+- **One-Click Omni-Channel Recovery:** Enables merchants to generate and dispatch dedicated Razorpay Payment Links directly to customers.
+- **Closed-Loop Reconciliation:** Captures subsequent `payment_link.paid` webhooks, reconciling the original failed record into a `RECOVERED` state and updating recovery metrics in real time.
+
+---
+
+## Verified End-to-End Flow
+
+PayLens has been validated end-to-end using **Razorpay Test Mode** (`rzp_test_*`). *No production funds or live consumer credit cards were used.*
 
 ```
-Customer Checkout
-  → Razorpay Test Mode Payment
-  → Payment Fails
-  → payment.failed Webhook
-  → HMAC Signature Validation
-  → Failure Classification
-  → AI Insight Generation (Gemini)
-  → Transaction Stored as PENDING
-  → Merchant Dashboard Detection
-  → Diagnostics & Root Cause
-  → "Recover Now" → Razorpay Payment Link
-  → Customer Retries Payment
-  → payment_link.paid Webhook
-  → Transaction Status → RECOVERED
-  → Dashboard Metrics Updated
+Customer Checkout (₹1,499)
+  ↓
+Razorpay Test Mode Payment Failure
+  ↓
+Webhook Ingested: payment.failed (HMAC SHA-256 Validated)
+  ↓
+Record Created: PENDING in Merchant Dashboard
+  ↓
+Merchant Reviews Error Code & AI Root-Cause Insight
+  ↓
+Merchant Triggers "Recover Now"
+  ↓
+Razorpay Payment Link Created via API
+  ↓
+Customer Completes Payment on Test Rails
+  ↓
+Webhook Ingested: payment_link.paid
+  ↓
+Original Transaction Status Updated: RECOVERED
+  ↓
+Dashboard Metrics Incremented (Recovered Revenue & Yield)
 ```
+
+---
+
+## Product Proof & Screenshots
+
+The core end-to-end recovery sequence moves an intercepted failure through full financial reconciliation:
+
+```
+PENDING ₹1,499 → Recover Now → Razorpay Payment Link → Test Payment Success → SAME Transaction → RECOVERED
+```
+
+Standardized showcase screenshots and capture specifications are documented in [`docs/screenshots/README.md`](docs/screenshots/README.md):
+
+| Stage | Visual Specification | Value Delivered |
+| :--- | :--- | :--- |
+| **01. Authentication** | `01-login.png` | Session authentication via Supabase Auth with JWT bearer scoping. |
+| **02. Ingestion** | `02-overview-pending.png` | Real-time capture of Razorpay failure showing amount, timestamp, and customer details. |
+| **03. Diagnostics** | `03-diagnostics.png` | Technical error drawer displaying gateway codes and asynchronous Gemini AI remediation tips. |
+| **04. Recovery Link** | `04-recovery-link.png` | Server-side Razorpay Payment Link generation with automated attempt tracking. |
+| **05. Customer Retry** | `05-razorpay-test-success.png` | Customer-facing payment completion on Razorpay sandbox rails. |
+| **06. Reconciliation** | `06-overview-recovered.png` | Reconciled overview table confirming the exact transaction ID marked `RECOVERED`. |
+
+---
+
+## How It Works
 
 ```mermaid
 sequenceDiagram
-    participant C as Customer
-    participant F as PayLens Frontend
-    participant S as PayLens Server
-    participant R as Razorpay
-    participant DB as Supabase
+    autonumber
+    participant Customer as Customer Browser
+    participant Client as PayLens Frontend
+    participant Server as PayLens Express API
+    participant Razorpay as Razorpay Test Gateway
+    participant DB as Supabase PostgreSQL
 
-    C->>F: Initiates checkout
-    F->>R: Opens Test Mode checkout
-    C->>R: Payment fails
-    R->>S: payment.failed webhook
-    S->>S: HMAC validation + classify
-    S->>DB: Store PENDING transaction
-    F->>S: Fetch transactions
-    S->>DB: RLS-scoped query
-    DB-->>S: Merchant's transactions
-    S-->>F: Display in dashboard
-    C->>F: Clicks "Recover Now"
-    F->>S: POST /api/recovery/:id
-    S->>R: Create Payment Link
-    R-->>S: Link URL
-    S-->>F: Return link
-    F->>C: Opens link in new tab
-    C->>R: Completes payment
-    R->>S: payment_link.paid webhook
-    S->>DB: Update → RECOVERED
-```
-
-For the complete step-by-step walkthrough, see [`docs/demo-flow.md`](docs/demo-flow.md).
-
----
-
-## Screenshots
-
-> Screenshots should be placed in `docs/screenshots/`. The following are recommended:
-
-| Screenshot | Description |
-|------------|-------------|
-| `login.png` | Login page |
-| `overview-pending.png` | Overview dashboard with a PENDING transaction |
-| `diagnostics.png` | Transaction diagnostics drawer with AI insight |
-| `recovery-link.png` | Recovery link generation |
-| `overview-recovered.png` | Dashboard after successful recovery |
-| `analytics.png` | Analytics page with recovery metrics |
-
-Once added, embed them here:
-
-```
-![Login](docs/screenshots/login.png)
-![Overview](docs/screenshots/overview-pending.png)
+    Customer->>Client: Initiates purchase (/checkout)
+    Client->>Server: POST /api/checkout/create-order
+    Server->>Razorpay: razorpay.orders.create({ amount, currency })
+    Razorpay-->>Server: Order ID & Sandbox Key
+    Server-->>Client: Checkout credentials
+    Client->>Razorpay: Opens Razorpay Checkout Modal
+    Customer->>Razorpay: Selects "Bank Failure" test flow
+    Razorpay-->>Client: payment.failed event
+    Razorpay->>Server: POST /api/webhooks/razorpay (payment.failed)
+    Note over Server: Validates HMAC-SHA256 over raw request buffer
+    Server->>DB: INSERT into failed_transactions (status: PENDING)
+    Server--)Server: Async background Gemini AI enrichment
+    Client->>Server: GET /api/transactions (Auth Bearer JWT)
+    Server->>DB: Scoped query (auth.uid = merchant_id)
+    DB-->>Server: Active transactions
+    Server-->>Client: Returns failure with PENDING badge
+    Client->>Server: POST /api/transactions/:id/recover
+    Note over Server: Verifies merchant ownership of transaction
+    Server->>Razorpay: paymentLink.create({ amount, customer })
+    Razorpay-->>Server: Returns short payment URL
+    Server->>DB: INSERT recovery_logs & UPDATE status: RECOVERY_SENT
+    Server-->>Client: Returns payment URL (opens in new tab)
+    Customer->>Razorpay: Completes payment via Test Card
+    Razorpay->>Server: POST /api/webhooks/razorpay (payment_link.paid)
+    Note over Server: Validates HMAC & resolves original transaction ID
+    Server->>DB: UPDATE failed_transactions SET status = 'RECOVERED'
+    Server->>DB: UPDATE recovery_logs SET status = 'PAID'
+    Client->>Server: GET /api/metrics
+    Server-->>Client: Updated recovery rate, yield, and GMV
 ```
 
 ---
 
-## Architecture
+## Technical Architecture
 
 ```mermaid
 flowchart TB
-    subgraph Frontend["Frontend · React + Vite"]
-        UI[Dashboard / Analytics / Recovery]
-        Checkout[Test Checkout]
+    subgraph ClientLayer["Frontend · React 19 + Vite 8"]
+        UI["Merchant Dashboard & Analytics"]
+        Sim["Test Checkout Simulator"]
+        AuthContext["Supabase Auth Context"]
     end
 
-    subgraph Backend["Backend · Express + Node.js"]
-        API[REST API]
-        Auth[JWT Middleware]
-        Webhooks[Webhook Handler]
-        Recovery[Recovery Engine]
-        Classifier[Failure Classifier]
-        AI[Gemini AI Service]
+    subgraph ServerLayer["Backend · Express 5 + Node.js"]
+        API["REST Controllers (/api/*)"]
+        AuthMid["JWT Verification Middleware"]
+        HMACMid["Raw Body Buffer Preservation"]
+        WebhookHandler["Webhook Event Processor"]
+        RecoverySvc["Razorpay Recovery Engine"]
+        AIWorker["Non-Blocking Gemini AI Worker"]
     end
 
-    subgraph Ext["External Services"]
-        Razorpay[Razorpay API]
-        Gemini[Google Gemini]
+    subgraph ServiceLayer["External Infrastructure"]
+        RazorpayAPI["Razorpay Payment APIs"]
+        RazorpayHooks["Razorpay Webhook Delivery"]
+        GeminiAPI["Google Gemini API"]
     end
 
-    subgraph DB["Supabase · PostgreSQL"]
-        Tables["merchants · failed_transactions · recovery_logs"]
-        RLS["Row-Level Security"]
+    subgraph DataLayer["Persistence · Supabase PostgreSQL"]
+        RLS["Row-Level Security (RLS)"]
+        MerchantsTbl["merchants"]
+        FailedTxTbl["failed_transactions"]
+        RecoveryLogsTbl["recovery_logs"]
     end
 
-    UI -->|Bearer JWT| API
-    Checkout -->|Create order| API
-    API --> Auth
-    Razorpay -->|Webhooks| Webhooks
-    Webhooks -->|HMAC SHA-256| Webhooks
-    Webhooks --> Classifier
-    Webhooks --> AI
-    AI --> Gemini
-    Recovery -->|Payment Link API| Razorpay
-    API --> DB
-    RLS -.->|"auth.uid() = merchant_id"| Tables
+    ClientLayer -->|"Bearer JWT Authorization"| API
+    Sim -->|"Create Sandbox Order"| API
+    API --> AuthMid
+    AuthMid -->|"Scoped Operations"| RLS
+    RazorpayHooks -->|"POST raw bytes + HMAC"| HMACMid
+    HMACMid --> WebhookHandler
+    WebhookHandler -->|"Store Failures"| RLS
+    WebhookHandler -.->|"Async trigger"| AIWorker
+    AIWorker -.->|"Model inference"| GeminiAPI
+    AIWorker -.->|"Patch AI insights"| FailedTxTbl
+    API --> RecoverySvc
+    RecoverySvc -->|"paymentLink.create"| RazorpayAPI
+    RLS -.->|"auth.uid() = merchant_id"| FailedTxTbl
+    RLS -.->|"auth.uid() = id"| MerchantsTbl
+    RLS -.->|"foreign key relation"| RecoveryLogsTbl
 ```
 
-Full architecture documentation: [`docs/architecture.md`](docs/architecture.md)
+### Component Responsibilities
+- **React 19 Frontend (`client/`):** Responsive dashboard providing live metric visualization, failure inspection, and checkout simulation.
+- **Express 5 API (`server/`):** High-throughput REST API managing authentication, rate limiting, and business validation.
+- **Supabase PostgreSQL (`supabase/`):** Relational storage enforcing strict multi-tenant data boundaries through Row-Level Security policies.
+- **Razorpay SDK & Webhooks:** Real-time payment lifecycle integration handling order generation, event webhooks, and payment links.
+- **Google Gemini Service:** Asynchronous worker generating structured merchant recommendations without delaying core payment threads.
+
+*Detailed architectural documentation is available in [`docs/architecture.md`](docs/architecture.md).*
 
 ---
 
-## Security
+## Engineering Highlights
 
-All security controls listed below are **implemented and verified** in the codebase:
+Every security and architectural pattern in PayLens addresses a specific production failure mode:
 
-| Control | Implementation |
-|---------|---------------|
-| Webhook authentication | HMAC SHA-256 with `crypto.timingSafeEqual` |
-| Raw body preservation | `express.json({ verify })` stores raw bytes for HMAC |
-| JWT authentication | Bearer tokens validated on all protected endpoints |
-| Merchant isolation | Supabase RLS policies enforce `auth.uid() = merchant_id` |
-| IDOR prevention | Server-side merchant scoping on all data queries |
-| CORS | Origin allowlist; rejects unknown origins |
-| Rate limiting | `express-rate-limit` on authentication endpoints |
-| Security headers | Helmet middleware on all responses |
-| Secret storage | All credentials in server-side `.env`; never exposed to client |
+| Engineering Decision | Production Problem Solved |
+| :--- | :--- |
+| **Raw Body Buffer Ingestion** | Standard JSON body parsers alter whitespace and key ordering during deserialization, corrupting HMAC calculation. PayLens captures byte-exact buffers via `express.json({ verify })` prior to parsing. |
+| **Constant-Time HMAC Verification** | Variable-time string comparisons (`===`) leak timing discrepancies that allow cryptographic oracle attacks. PayLens enforces `crypto.timingSafeEqual` over computed SHA-256 digests. |
+| **Multi-Tenant Row-Level Security** | Relying solely on application-level filtering (`WHERE merchant_id = ...`) risks IDOR vulnerabilities from developer error. Supabase RLS policies enforce `auth.uid() = merchant_id` at the database engine level. |
+| **Merchant-Scoped Recovery** | Prevents unauthorized actors from triggering payment links or altering recovery status for transactions belonging to other merchants. |
+| **Non-Blocking AI Analysis** | Invoking LLM inference directly in webhook handlers causes HTTP connection timeouts and webhook retries from Razorpay. PayLens persists failures immediately and offloads AI enrichment to background workers. |
+| **Targeted State Machine Updates** | Webhook reconciliation matches explicit transaction IDs rather than broadcast status updates, preventing race conditions or cross-record corruption. |
+| **Strict Origin Allowlisting** | Dynamic CORS middleware limits browser origin access strictly to verified merchant dashboard domains, mitigating CSRF and malicious cross-origin requests. |
+| **Authentication Rate Limiting** | `express-rate-limit` enforces threshold bounds on login endpoints, returning `HTTP 429` to defend against credential stuffing. |
 
 ---
 
 ## Testing & Validation
 
-| Metric | Value |
-|--------|-------|
-| Total tests | 57 |
-| Passed | 57 |
-| Failed | 0 |
+The PayLens platform has been validated through a 57-test automated verification suite covering security, integration contracts, and business logic:
 
-### Test Coverage
-
-| Category | What is tested |
-|----------|---------------|
-| Authentication | JWT enforcement, 401 on missing/invalid tokens |
-| Authorization | Merchant data isolation, IDOR prevention |
-| Webhook security | HMAC validation, timing-safe comparison, invalid signature rejection |
-| Recovery flow | Payment Link creation, state transitions, attempt tracking |
-| API contracts | Endpoint response formats, error handling |
-| Secret exposure | No credentials in API responses |
-| AI integration | Gemini connectivity, graceful fallback |
-
-### End-to-End Verification
-
-The complete Razorpay Test Mode flow has been verified:
-- `payment.failed` → detection → classification → dashboard → recovery → `payment_link.paid` → `RECOVERED`
-
-**Production payments were NOT used.** All testing was performed exclusively in Razorpay Test Mode.
-
-Test details: [`docs/testing.md`](docs/testing.md)
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, Vite 8, TailwindCSS 4, React Router 7 |
-| Backend | Node.js, Express 5, Zod (validation) |
-| Database | Supabase (PostgreSQL) with Row-Level Security |
-| Payments | Razorpay SDK (Test Mode) |
-| AI | Google Gemini (`@google/genai`) |
-| Security | Helmet, CORS, express-rate-limit, crypto (HMAC) |
-| Auth | Supabase Auth (JWT) |
-
----
-
-## Quick Start
-
-### Prerequisites
-- Node.js 20+
-- npm
-- A [Razorpay](https://razorpay.com) account (Test Mode keys)
-- A [Supabase](https://supabase.com) project
-- (Optional) A [Google AI](https://ai.google.dev/) API key for Gemini
-
-### Setup
-
-```bash
-# Clone
-git clone https://github.com/fareedvali/PayLens.git
-cd PayLens
-
-# Install dependencies
-cd client && npm install && cd ..
-cd server && npm install && cd ..
-
-# Configure environment
-cp client/.env.example client/.env
-cp server/.env.example server/.env
-# Edit both .env files with your credentials
-
-# Apply database schema
-# Run server/supabase/migrations/001_initial_schema.sql in your Supabase SQL editor
-
-# Start development servers
-# Terminal 1: Client
-cd client && npm run dev
-
-# Terminal 2: Server
-cd server && npm run dev
+```
+================================================================================
+PayLens Comprehensive Test Suite
+57 passed, 0 failed (100% pass rate)
+================================================================================
 ```
 
-Open `http://localhost:5173` in your browser.
+### Coverage Categories
+- **Webhook Security & Scoping:** Raw buffer HMAC integrity, signature rejection, malformed payload handling, and replay prevention.
+- **Authentication & Authorization:** JWT validation, unauthorized rejection (401), and permission boundary enforcement.
+- **Merchant Isolation (IDOR):** Scoped queries and prevention of cross-merchant data leakage.
+- **Recovery State Engine:** State machine progression (`PENDING` &rarr; `RECOVERY_SENT` &rarr; `RECOVERED`) and retry counters.
+- **Secret Hygiene:** Verification that server-side credentials and service role keys are never exposed over API contracts.
+- **Network & CORS:** Rejection of untrusted origins and validation of security headers via Helmet.
+- **AI Fault Tolerance:** Fallback insight delivery during external LLM latency or timeout events.
+- **Real Razorpay Test Mode E2E:** Live end-to-end payment failure and recovery executed against real sandbox rails.
 
-### Webhook Setup (for local development)
-
-Razorpay webhooks need a public URL. Use a tunnel:
-
-```bash
-# Example with ngrok
-ngrok http 3001
-
-# Configure the forwarding URL in Razorpay Dashboard → Webhooks:
-# https://your-tunnel-url.ngrok.io/api/webhooks/razorpay
-```
+*Full test specifications and reproduction commands are documented in [`docs/testing.md`](docs/testing.md).*
 
 ---
 
-## Environment Variables
+## Security
 
-### Client (`client/.env`)
+PayLens incorporates layered security controls across both application and transport boundaries:
 
-| Variable | Description |
-|----------|-------------|
-| `VITE_SUPABASE_URL` | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key |
-| `VITE_API_BASE_URL` | Backend API URL (default: `http://localhost:3001/api`) |
+- **Authentication:** Supabase Auth issues cryptographically signed JWTs validated by backend bearer middleware.
+- **Data Isolation:** All database reads, updates, and deletes are scoped to the authenticated merchant ID.
+- **Webhook Verification:** Signatures are checked against the configured `RAZORPAY_WEBHOOK_SECRET` before processing.
+- **Credential Segregation:** Server secrets (`SUPABASE_SERVICE_ROLE_KEY`, `RAZORPAY_KEY_SECRET`, `GEMINI_API_KEY`) remain strictly server-side. The client application utilizes only browser-safe anon credentials.
+- **Defense in Depth:** Helmet enforces HTTP security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, and strict HSTS).
 
-### Server (`server/.env`)
-
-| Variable | Description |
-|----------|-------------|
-| `PORT` | Server port (default: `3001`) |
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only) |
-| `DEFAULT_MERCHANT_ID` | Default merchant UUID for test operations |
-| `CORS_ORIGIN` | Allowed CORS origins (comma-separated) |
-| `RAZORPAY_KEY_ID` | Razorpay Test Mode key ID |
-| `RAZORPAY_KEY_SECRET` | Razorpay Test Mode key secret |
-| `RAZORPAY_WEBHOOK_SECRET` | Razorpay webhook signing secret |
-| `GEMINI_API_KEY` | Google Gemini API key |
+*See [`SECURITY.md`](SECURITY.md) for our vulnerability reporting policy and guidelines.*
 
 ---
 
@@ -282,73 +257,151 @@ ngrok http 3001
 
 ```
 PayLens/
-├── client/                          # React frontend
+├── client/                          # React 19 Frontend
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── dashboard/           # Dashboard widgets (KPI, tables, diagnostics)
-│   │   │   ├── ui/                  # Reusable UI components
-│   │   │   ├── Sidebar.jsx
-│   │   │   └── AppLayout.jsx
-│   │   ├── contexts/                # Auth context
-│   │   ├── lib/                     # API client, Supabase config
-│   │   └── pages/                   # Route pages (Login, Dashboard, Recovery, etc.)
-│   ├── public/
-│   └── .env.example
-├── server/                          # Express backend
+│   │   ├── components/              # UI widgets, layout elements, and dialogs
+│   │   ├── contexts/                # Auth context and session management
+│   │   ├── lib/                     # API client abstraction & Supabase client
+│   │   └── pages/                   # Application views (Dashboard, Recovery, Checkout)
+│   ├── .env.example                 # Browser-safe client environment template
+│   └── package.json
+├── server/                          # Express 5 Backend API
 │   ├── src/
-│   │   ├── config/                  # Supabase client init
-│   │   ├── middleware/              # Auth, rate limiter, error handler
-│   │   ├── routes/                  # API routes
-│   │   │   ├── webhooks.js          # Razorpay webhook handler
-│   │   │   ├── recovery.js          # Recovery + Payment Link creation
-│   │   │   ├── checkout.js          # Order creation
-│   │   │   ├── metrics.js           # Analytics data
-│   │   │   ├── settings.js          # Merchant settings
-│   │   │   └── auth.js              # Authentication
-│   │   ├── services/                # Gemini AI service
-│   │   ├── schemas/                 # Zod validation schemas
-│   │   └── utils/                   # Failure classifier
-│   ├── supabase/migrations/         # SQL schema
-│   ├── test_*.js                    # Test files
-│   └── .env.example
-├── docs/
-│   ├── architecture.md
-│   ├── demo-flow.md
-│   ├── testing.md
-│   └── screenshots/
-├── .github/workflows/ci.yml
-├── .gitignore
-├── CONTRIBUTING.md
-├── LICENSE
-└── README.md
+│   │   ├── config/                  # Supabase & Razorpay client initialization
+│   │   ├── middleware/              # Auth JWT, rate limiters, raw body HMAC
+│   │   ├── routes/                  # API routers (webhooks, recovery, checkout, metrics)
+│   │   ├── services/                # Gemini AI background enrichment worker
+│   │   └── utils/                   # Failure categorization & normalization
+│   ├── supabase/migrations/         # PostgreSQL schema & Row-Level Security policies
+│   ├── test_*.js                    # Integration, security, and webhook regression tests
+│   ├── .env.example                 # Backend environment variable template
+│   └── package.json
+├── docs/                            # Deep-dive engineering documentation
+│   ├── architecture.md              # Detailed architectural design & boundaries
+│   ├── demo-flow.md                 # 3-5 minute step-by-step verification guide
+│   ├── testing.md                   # Automated testing suite and results breakdown
+│   └── screenshots/                 # Showcase assets and README specifications
+├── .github/workflows/ci.yml         # GitHub Actions workflow (lint & build validation)
+├── CONTRIBUTING.md                  # Development guidelines and PR checklist
+├── LICENSE                          # MIT License
+├── SECURITY.md                      # Security disclosure guidelines
+└── README.md                        # Project showcase documentation
 ```
+
+---
+
+## Quick Start
+
+### Prerequisites
+- **Node.js**: v20.x or higher
+- **npm**: v10.x or higher
+- **Razorpay Account**: Access to [Razorpay Dashboard](https://dashboard.razorpay.com) in Test Mode
+- **Supabase Project**: Free-tier project with PostgreSQL database access
+- **Tunnel Utility**: `ngrok`, `zrok`, or `localtunnel` (for routing Razorpay webhooks to localhost)
+
+### 1. Clone & Install Dependencies
+```bash
+git clone https://github.com/fareedvali0708-cmyk/PayLens.git
+cd PayLens
+
+# Install frontend dependencies
+cd client && npm install && cd ..
+
+# Install backend dependencies
+cd server && npm install && cd ..
+```
+
+### 2. Configure Environment Variables
+Copy the provided templates and supply your sandbox credentials:
+
+```bash
+# Frontend environment
+cp client/.env.example client/.env
+
+# Backend environment
+cp server/.env.example server/.env
+```
+
+*Refer to `client/.env.example` and `server/.env.example` for required configuration variables.*
+
+### 3. Initialize Database Schema
+Execute the SQL migration located at `server/supabase/migrations/001_initial_schema.sql` inside your Supabase project SQL Editor to instantiate required tables, foreign keys, and RLS policies.
+
+### 4. Start Development Servers
+```bash
+# Terminal 1: Start Express API (Port 3001)
+cd server
+npm run dev
+
+# Terminal 2: Start React Frontend (Port 5173)
+cd client
+npm run dev
+```
+
+### 5. Configure Razorpay Webhook Tunnel
+Expose local port `3001` via your chosen tunneling tool:
+```bash
+# Example with ngrok
+ngrok http 3001
+```
+In your Razorpay Dashboard (**Settings &rarr; Webhooks &rarr; Add New Webhook**):
+- **Webhook URL**: `https://<your-tunnel-url>/api/webhooks/razorpay`
+- **Secret**: Set to match `RAZORPAY_WEBHOOK_SECRET` in `server/.env`
+- **Active Events**: `payment.failed`, `payment_link.paid`
+
+Open `http://localhost:5173` to access the application.
+
+---
+
+## Demo Walkthrough
+
+A complete demonstration of the payment interception and recovery loop requires approximately 3 to 5 minutes:
+
+1. **Simulate Purchase:** Visit `/checkout` and initiate a test order of ₹1,499.
+2. **Trigger Bank Decline:** Select any payment method in the Razorpay Test Modal and click **Failed** on the simulation screen.
+3. **Inspect Real-Time Interception:** Open the **Overview Dashboard** (`/app/overview`) to view the newly captured transaction with a `PENDING` status.
+4. **Review Diagnostics:** Click **View** to inspect the root cause, gateway error codes, and Gemini AI coaching insights.
+5. **Issue Recovery:** Click **Recover Now** to generate a Razorpay Payment Link.
+6. **Execute Customer Recovery:** Complete payment via the opened payment link using Razorpay test credentials.
+7. **Reconciliation:** Return to the dashboard to verify that the transaction transitions to `RECOVERED` and recovery yield metrics update automatically.
+
+*For detailed reproduction steps, see [`docs/demo-flow.md`](docs/demo-flow.md).*
 
 ---
 
 ## Limitations & Future Scope
 
-### Current Limitations
-- Operates in **Razorpay Test Mode only**; not configured for production payments
-- AI insights depend on Gemini API availability
-- No automated E2E test suite (tests require live Supabase/Razorpay credentials)
-- Single-tenant default merchant for demo purposes
+### Current Implementation Scope
+- **Test Mode Operation:** Designed and validated exclusively against Razorpay Sandbox APIs.
+- **Payment Link Recovery:** Automated recovery currently delivers payment opportunities via direct Razorpay Payment Links.
+- **Sandbox Link Quota:** Razorpay Test Mode imposes a quota of 30 concurrent active payment links per sandbox account.
 
-### Planned Improvements
-- Production Razorpay integration with compliance checks
-- Multi-tenant onboarding flow
-- Automated recovery scheduling (batch recovery)
-- SMS/email notification channels for customers
-- Advanced analytics with trend detection
-- Mobile-responsive design improvements
+### Future Scope
+- **Omni-Channel Dispatch:** Direct integration with WhatsApp Business API and transactional SMS gateways (Twilio / Gupshup).
+- **Automated Retry Rules:** Configurable recovery policies based on failure category (e.g., immediate retry for network drops vs. delayed nudge for daily limit breaches).
+- **Smart Routing Recommendations:** AI-driven checkout payment method re-ordering based on real-time issuing bank health telemetry.
+
+---
+
+## What This Project Demonstrates
+
+This project provides concrete evidence of full-stack engineering proficiency across core domains:
+
+- **Payment System Integration:** Deep understanding of order creation lifecycles, webhook event handling, and payment link generation.
+- **Defensive Backend Architecture:** Implementation of raw buffer cryptographic validation, constant-time comparisons, rate limiting, and structured error boundaries.
+- **Multi-Tenant Data Modeling:** Database schema design utilizing PostgreSQL Row-Level Security for isolation.
+- **Asynchronous Processing:** Decoupling high-frequency payment webhooks from long-running LLM inference workflows.
+- **Automated Verification:** Comprehensive test automation spanning unit contracts, security regression suites, and live third-party API flows.
+- **Clear Technical Communication:** Architecture documentation, reproducible demo protocols, and standardized open-source repository structure.
 
 ---
 
 ## Contributing
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for guidelines.
+Contributions, bug reports, and suggestions are welcome. Please review [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch workflows, linting requirements, and testing expectations before submitting a pull request.
 
 ---
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE) for details.
+This project is open source and available under the terms of the [MIT License](LICENSE).

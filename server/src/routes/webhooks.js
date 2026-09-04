@@ -17,9 +17,16 @@ const router = express.Router();
 function verifyWebhookSignature(rawBody, signature, secret) {
   if (!signature || !secret) return false;
   try {
+    const payload =
+      Buffer.isBuffer(rawBody)
+        ? rawBody
+        : typeof rawBody === "string"
+          ? rawBody
+          : JSON.stringify(rawBody);
+
     const expectedSignature = crypto
       .createHmac("sha256", secret)
-      .update(typeof rawBody === "string" ? rawBody : JSON.stringify(rawBody))
+      .update(payload)
       .digest("hex");
     return crypto.timingSafeEqual(
       Buffer.from(expectedSignature, "utf8"),
@@ -151,9 +158,13 @@ router.post("/razorpay", async (req, res) => {
 
     // Handle successful recovery event via payment link
     if (eventType === "payment_link.paid" || eventType === "payment.captured") {
-      const entity = payload.payload?.payment_link?.entity || payload.payload?.payment?.entity;
-      const paymentLinkId = entity?.id;
-      const originalTxId = entity?.notes?.original_transaction_id;
+      const paymentLinkEntity = payload.payload?.payment_link?.entity;
+      const paymentEntity = payload.payload?.payment?.entity;
+      const paymentLinkId = paymentLinkEntity?.id || null;
+      const originalTxId =
+        paymentLinkEntity?.notes?.original_transaction_id ||
+        paymentEntity?.notes?.original_transaction_id ||
+        null;
 
       if (paymentLinkId || originalTxId) {
         // Update recovery logs
@@ -164,23 +175,27 @@ router.post("/razorpay", async (req, res) => {
             .eq("payment_link_id", paymentLinkId);
         }
 
-        // Update failed transaction status to RECOVERED
-        let updateQuery = supabase.from("failed_transactions").update({ status: "RECOVERED" });
-        if (originalTxId) {
-          updateQuery = updateQuery.eq("id", originalTxId);
-        } else if (paymentLinkId) {
+        // Update failed transaction status to RECOVERED if a target transaction ID is resolved
+        let targetTxId = originalTxId || null;
+        if (!targetTxId && paymentLinkId) {
           // Find transaction_id from recovery_logs
           const { data: logData } = await supabase
             .from("recovery_logs")
             .select("transaction_id")
             .eq("payment_link_id", paymentLinkId)
-            .single();
+            .maybeSingle();
 
           if (logData?.transaction_id) {
-            updateQuery = updateQuery.eq("id", logData.transaction_id);
+            targetTxId = logData.transaction_id;
           }
         }
-        await updateQuery;
+
+        if (targetTxId) {
+          await supabase
+            .from("failed_transactions")
+            .update({ status: "RECOVERED" })
+            .eq("id", targetTxId);
+        }
       }
 
       return res.status(200).json({

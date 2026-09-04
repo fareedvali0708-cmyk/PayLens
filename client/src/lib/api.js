@@ -98,8 +98,8 @@ export async function updateSettings(token, settingsData) {
  * Generates a Razorpay Test Mode checkout order (unauthenticated customer demo).
  * @param {number} amount - Amount in INR (default 1499)
  */
-export async function createCheckoutOrder(amount = 1499) {
-  return request('/checkout/create-order', null, {
+export async function createCheckoutOrder(amount = 1499, token = null) {
+  return request('/checkout/create-order', token, {
     method: 'POST',
     body: JSON.stringify({ amount }),
   })
