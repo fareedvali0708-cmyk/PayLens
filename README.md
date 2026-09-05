@@ -2,6 +2,16 @@
 
 > Real-time payment failure detection, diagnosis, and recovery for Razorpay merchants.
 
+### ▶ Watch the 5-Minute Demo
+
+[**Watch PayLens in action →**](https://drive.google.com/file/d/1BKVlVfzGYM_0q3Hblm59CwPTVFu8VX60/view?usp=sharing)
+
+> **Demo environment:** Razorpay Test Mode only. No real payments are processed.
+
+### Why PayLens?
+
+PayLens helps merchants turn failed payments into recovery opportunities by detecting failures, explaining what happened, providing a recovery path, and confirming when the payment is recovered.
+
 [![CI](https://github.com/fareedvali0708-cmyk/PayLens/actions/workflows/ci.yml/badge.svg)](https://github.com/fareedvali0708-cmyk/PayLens/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
